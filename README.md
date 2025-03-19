@@ -77,15 +77,17 @@ The application handles this format automatically for you when using the plainte
    - The namespace in hex format (as shown in Celestia Explorer)
    - The commitment (hash) of your blob, which can be used to verify or retrieve the blob later
 
-### Data Encryption
+### Database Encryption
 
-The application provides data encryption functionality:
+The Private Database Rollup feature includes encryption functionality:
 
-1. Data is encrypted based on your browser session
+1. Database data is encrypted based on your browser session
 2. A unique encryption key is generated for your session
-3. All data is encrypted before being submitted to the Celestia network
-4. Only users with the same session key can decrypt the data
-5. This provides an additional layer of privacy for your blob data
+3. All database records are encrypted before being submitted to the Celestia network
+4. Only users with the same session key can decrypt the database records
+5. This provides an additional layer of privacy for your database rollup
+
+Note: The standard blob posting functionality does not encrypt data by default.
 
 ### Retrieving a Blob
 

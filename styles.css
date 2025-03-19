@@ -1,0 +1,1249 @@
+/* Import Untitled Sans font */
+@font-face {
+  font-family: 'Untitled Sans';
+  src: url('./public/untitled-sans-regular.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Untitled Sans';
+  src: url('./public/untitled-sans-medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Import Youth font */
+@font-face {
+  font-family: 'Youth';
+  src: url('./public/Youth-Regular.woff2') format('woff2'),
+       url('./public/Youth-Regular.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --bg-color: #f8f9fa;
+  --card-bg: white;
+  --text-color: #212529;
+  --border-color: #dee2e6;
+  --primary-color: #6c5ce7;
+  --secondary-bg: #f8f9fa;
+  --node-info-bg: #e6e0f3;
+  --namespace-bg: #e3f2fd;
+  --code-bg: #2d2d2d;
+  --code-color: #f8f8f2;
+  --toast-bg: #333;
+  --toast-color: white;
+  --transfer-bg: #e8f4fd;
+  /* Standard font variables */
+  --font-family-base: 'Untitled Sans', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-family-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  --font-size-base: 0.85rem;
+  --font-size-sm: 0.8rem;
+  --font-size-xs: 0.75rem;
+  --font-size-lg: 0.95rem;
+  --font-size-h1: 1.5rem;
+  --font-size-h2: 1.35rem;
+  --font-size-h3: 1.25rem;
+  --font-size-h4: 1.15rem;
+  --font-size-h5: 1rem;
+  --font-size-h6: 0.9rem;
+  --font-weight-normal: normal;
+  --font-weight-bold: 500;
+  --line-height-base: 1.4;
+  --letter-spacing-normal: normal;
+  --text-shadow-none: none;
+}
+
+[data-theme="dark"] {
+  --bg-color: #121212;
+  --card-bg: #1e1e1e;
+  --text-color: #e0e0e0;
+  --border-color: #444;
+  --primary-color: #8c7ff0;
+  --secondary-bg: #2d2d2d;
+  --node-info-bg: #292536;
+  --namespace-bg: #1a2634;
+  --code-bg: #000000;
+  --code-color: #f8f8f2;
+  --toast-bg: #555;
+  --toast-color: white;
+  --transfer-bg: #1e2a38;
+  /* Font variables already defined in :root, no need to redefine */
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+  font-weight: var(--font-weight-normal);
+}
+
+/* Standardize headings across both themes */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Youth', var(--font-family-base);
+  font-weight: var(--font-weight-normal);
+  letter-spacing: var(--letter-spacing-normal);
+}
+
+/* Add a special font for the main header/title */
+.header h1 {
+  font-family: 'Youth', var(--font-family-base);
+  font-size: 2rem;
+  letter-spacing: 0.01em;
+}
+
+h1 { font-size: var(--font-size-h1); }
+h2 { font-size: var(--font-size-h2); }
+h3 { font-size: var(--font-size-h3); }
+h4 { font-size: var(--font-size-h4); }
+h5 { font-size: var(--font-size-h5); }
+h6 { font-size: var(--font-size-h6); }
+
+/* Standardize monospace elements */
+pre, code, .code-block, .command-box, .result-value, .node-info-value, .hex-display {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+}
+
+/* Standardize form elements */
+.form-label {
+  font-weight: var(--font-weight-normal);
+  font-size: var(--font-size-base);
+}
+
+.form-text, .text-muted, small, .small {
+  font-size: var(--font-size-sm);
+}
+
+/* Standardize buttons and badges */
+.btn, .badge {
+  font-weight: var(--font-weight-normal);
+  letter-spacing: var(--letter-spacing-normal);
+}
+
+/* Standardize strong and bold elements */
+strong, b, .font-weight-bold, .fw-bold {
+  font-weight: var(--font-weight-bold);
+}
+
+.data-display {
+  background-color: var(--secondary-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 10px;
+  margin-top: 10px;
+}
+
+.code-block {
+  background-color: var(--code-bg);
+  color: var(--code-color);
+  border-radius: 4px;
+  padding: 10px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* Dark mode toggle styles */
+.theme-toggle {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  z-index: 1000;
+  cursor: pointer;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+  transform: scale(1.1);
+}
+
+#lightIcon {
+  color: #f39c12;
+  font-size: 1.2rem;
+}
+
+#darkIcon {
+  color: #f8f9fa;
+  font-size: 1.2rem;
+}
+
+/* Additional dark mode adjustments */
+[data-theme="dark"] .card {
+  background-color: var(--card-bg);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .btn-primary {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+[data-theme="dark"] .btn-primary:hover {
+  background-color: #7b6bf0;
+  border-color: #7b6bf0;
+}
+
+[data-theme="dark"] .btn-outline-primary {
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+[data-theme="dark"] .btn-outline-primary:hover {
+  background-color: var(--primary-color);
+  color: var(--card-bg);
+}
+
+[data-theme="dark"] .btn-outline-secondary {
+  color: #adb5bd;
+  border-color: #adb5bd;
+}
+
+[data-theme="dark"] .btn-outline-secondary:hover {
+  background-color: #adb5bd;
+  color: var(--card-bg);
+}
+
+[data-theme="dark"] .btn-outline-info {
+  color: #0dcaf0;
+  border-color: #0dcaf0;
+}
+
+[data-theme="dark"] .alert-success {
+  background-color: #0f3a2c;
+  color: #d1e7dd;
+  border-color: #125a42;
+}
+
+[data-theme="dark"] .alert-info {
+  background-color: #032830;
+  color: #cff4fc;
+  border-color: #053d48;
+}
+
+[data-theme="dark"] .card-header {
+  background-color: var(--secondary-bg);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .modal-content {
+  background-color: var(--card-bg);
+  color: var(--text-color);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .modal-header,
+[data-theme="dark"] .modal-footer {
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+[data-theme="dark"] .nav-tabs {
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .nav-tabs .nav-link {
+  color: var(--text-color);
+}
+
+[data-theme="dark"] .nav-tabs .nav-link.active {
+  color: var(--primary-color);
+  background-color: var(--card-bg);
+  border-color: var(--border-color) var(--border-color) var(--card-bg);
+}
+
+[data-theme="dark"] .code-block,
+[data-theme="dark"] .card-body code {
+  background-color: #1a1a1a;
+  color: #d1d1d1;
+}
+
+[data-theme="dark"] .command-box {
+  background-color: #1a1a1a;
+  color: #e9e9e9;
+  border: 1px solid var(--border-color);
+}
+
+[data-theme="dark"] .namespace-info,
+[data-theme="dark"] .sampling-stats-container {
+  background-color: var(--namespace-bg);
+  color: var(--text-color);
+}
+
+[data-theme="dark"] .form-control::placeholder,
+[data-theme="dark"] .form-select::placeholder {
+  color: #aaa;
+}
+
+/* Improve result values in dark mode */
+[data-theme="dark"] .result-value {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #e0e0e0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Fix code boxes in dark mode */
+[data-theme="dark"] pre,
+[data-theme="dark"] code {
+  background-color: #1a1a1a;
+  color: #e0e0e0;
+}
+
+/* Fix tab background in dark mode */
+[data-theme="dark"] .tab-content {
+  background-color: var(--card-bg);
+}
+
+/* Improve link visibility in dark mode */
+[data-theme="dark"] a {
+  color: #a2c0ff;
+}
+
+[data-theme="dark"] a:hover {
+  color: #c7daff;
+}
+
+/* Fix submit success section in dark mode */
+[data-theme="dark"] #resultContainer .alert-success .result-value {
+  background-color: rgba(25, 135, 84, 0.15);
+  border-color: rgba(25, 135, 84, 0.25);
+}
+
+/* Fix retrieval section in dark mode */
+[data-theme="dark"] #blobResults .alert-info .result-value {
+  background-color: rgba(13, 202, 240, 0.15);
+  border-color: rgba(13, 202, 240, 0.25);
+}
+
+/* Improve code command displays in dark mode */
+[data-theme="dark"] .card-body code {
+  background-color: #121212;
+  color: #e0e0e0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .command-box {
+  background-color: #121212;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Highlight text colors in commands for better readability */
+[data-theme="dark"] #cliHeight,
+[data-theme="dark"] #cliNamespace,
+[data-theme="dark"] #cliCommitment,
+[data-theme="dark"] #curlHeight,
+[data-theme="dark"] #curlNamespace,
+[data-theme="dark"] #curlCommitment {
+  color: #7b6bf0;
+  font-weight: 500;
+}
+
+/* Fix copy button contrast */
+[data-theme="dark"] .btn-sm.btn-outline-secondary {
+  color: #e0e0e0;
+  border-color: #6c757d;
+}
+
+[data-theme="dark"] .btn-sm.btn-outline-secondary:hover {
+  background-color: #6c757d;
+  color: #121212;
+}
+
+/* Improve base64 tools section */
+[data-theme="dark"] .base64-tools {
+  border-top-color: var(--border-color);
+}
+
+/* Fix tab button styling */
+[data-theme="dark"] .nav-tabs .nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .nav-tabs .nav-link.active {
+  background-color: var(--card-bg);
+  color: var(--primary-color);
+  border-color: var(--border-color) var(--border-color) var(--card-bg);
+  border-bottom: 2px solid var(--primary-color);
+}
+
+/* Fix modal button styling */
+[data-theme="dark"] .btn-secondary {
+  background-color: #495057;
+  border-color: #495057;
+  color: #e0e0e0;
+}
+
+/* Improve namespace radio buttons in dark mode */
+[data-theme="dark"] .btn-check:checked + .btn-outline-primary {
+  background-color: var(--primary-color);
+  color: #e0e0e0;
+  border-color: var(--primary-color);
+}
+
+/* Prevent white flashes during theme transitions */
+.modal-backdrop {
+  background-color: var(--bg-color);
+}
+
+/* Fix worker panel in dark mode */
+[data-theme="dark"] .worker-panel,
+[data-theme="dark"] .worker-info {
+  background-color: var(--card-bg);
+  color: var(--text-color);
+  border-color: var(--border-color);
+}
+
+/* Improve selector contrast in dark mode */
+[data-theme="dark"] .nav-item .nav-link {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #e0e0e0;
+  border: 1px solid #444;
+  margin-right: 2px;
+}
+
+[data-theme="dark"] .nav-item .nav-link.active {
+  background-color: var(--primary-color);
+  color: #ffffff;
+  border-color: var(--primary-color);
+}
+
+[data-theme="dark"] .nav-item .nav-link:not(.active):hover {
+  background-color: rgba(140, 127, 240, 0.2);
+  border-color: var(--primary-color);
+}
+
+/* Specific styling for namespace selector tabs */
+[data-theme="dark"] .namespace-options .btn-check + .btn-outline-primary {
+  background-color: rgba(30, 30, 30, 0.7);
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .namespace-options .btn-check:checked + .btn-outline-primary {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+[data-theme="dark"] .namespace-options .btn-outline-primary {
+  border-color: #444;
+}
+
+[data-theme="dark"] .namespace-options .btn-outline-primary:hover:not(.active) {
+  background-color: rgba(140, 127, 240, 0.2);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+/* Improve namespace button group contrast */
+[data-theme="dark"] .btn-check:not(:checked) + .btn-outline-primary {
+  background-color: #2d2d2d;
+  color: #e0e0e0;
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .btn-check:checked + .btn-outline-primary {
+  background-color: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+[data-theme="dark"] .btn-check + .btn-outline-primary:hover {
+  background-color: rgba(140, 127, 240, 0.3);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+/* Fix specifically for the namespace button group in dark mode */
+[data-theme="dark"] .namespace-options .btn-group label.btn {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+[data-theme="dark"] .namespace-options .btn-group label.btn:not(:last-child) {
+  border-right-color: transparent;
+}
+
+/* Add more contrast between active and inactive buttons */
+[data-theme="dark"] .namespace-options #namespaceTypePlaintext:checked + label.btn {
+  background-color: var(--primary-color);
+  color: white !important;
+  border-color: var(--primary-color);
+  position: relative;
+  z-index: 2;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  font-weight: 600;
+}
+
+/* Fix ALL namespace buttons for dark mode */
+[data-theme="dark"] .namespace-options .btn-check:checked + label.btn {
+  background-color: var(--primary-color);
+  color: white !important; 
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Fix for the button labels in general */
+[data-theme="dark"] #namespaceTypeBase64:checked + label,
+[data-theme="dark"] #namespaceTypePlaintext:checked + label,
+[data-theme="dark"] #namespaceTypeRandom:checked + label {
+  background-color: var(--primary-color) !important;
+  color: white !important;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Add inactive button styling */
+[data-theme="dark"] #namespaceTypeBase64:not(:checked) + label,
+[data-theme="dark"] #namespaceTypePlaintext:not(:checked) + label,
+[data-theme="dark"] #namespaceTypeRandom:not(:checked) + label {
+  background-color: #2d2d2d;
+  color: #e0e0e0;
+}
+
+/* Ensure proper spacing and borders for the button group */
+[data-theme="dark"] .namespace-options .btn-group {
+  display: flex;
+}
+
+[data-theme="dark"] .namespace-options .btn-group label.btn {
+  flex: 1;
+  text-align: center;
+  padding: 0.375rem 0.75rem;
+  transition: all 0.2s ease;
+}
+
+/* Comprehensive worker table styling */
+[data-theme="dark"] #workersDetails {
+  color: var(--text-color) !important;
+  background-color: rgba(0, 0, 0, 0.2) !important;
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 15px;
+  border-radius: 6px;
+  padding: 8px;
+}
+
+[data-theme="dark"] #workersDetails table.table {
+  background-color: var(--card-bg) !important;
+  color: var(--text-color) !important;
+  border: 1px solid var(--border-color) !important;
+  margin-top: 10px !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  border-radius: 4px !important;
+  overflow: hidden !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+[data-theme="dark"] #workersDetails table.table th {
+  color: var(--primary-color) !important;
+  background-color: var(--secondary-bg) !important;
+  padding: 10px !important;
+  font-weight: 600 !important;
+  border-bottom: 2px solid var(--border-color) !important;
+}
+
+[data-theme="dark"] #workersDetails table.table td {
+  color: var(--text-color) !important;
+  background-color: transparent !important;
+  border-color: var(--border-color) !important;
+  padding: 10px !important;
+}
+
+[data-theme="dark"] #workersDetails table.table tr:nth-of-type(odd) td {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+[data-theme="dark"] #workersDetails table.table tr:nth-of-type(even) td {
+  background-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+[data-theme="dark"] #workersDetails .progress {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  height: 10px !important;
+  margin-bottom: 4px !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+}
+
+[data-theme="dark"] #workersDetails .progress-bar {
+  background-color: var(--primary-color) !important;
+  height: 10px !important;
+}
+
+[data-theme="dark"] #workersDetails .small {
+  color: var(--text-color) !important;
+  font-size: 0.8rem !important;
+}
+
+/* Fix main progress bar in sampling stats */
+[data-theme="dark"] .sampling-stats-container .progress:not(#workersDetails .progress) {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  height: 38px !important;
+  border-radius: 6px !important;
+  overflow: hidden !important;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+  position: relative !important;
+}
+
+[data-theme="dark"] .sampling-stats-container .progress-bar:not(#workersDetails .progress-bar) {
+  background-color: var(--primary-color) !important;
+  background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent) !important;
+  background-size: 1rem 1rem !important;
+}
+
+[data-theme="dark"] .progress-status-text {
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: white !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
+  font-weight: 500 !important;
+}
+
+/* Improve spacing in the sampling stats section */
+[data-theme="dark"] .sampling-stats-container {
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  margin-top: 15px;
+}
+
+[data-theme="dark"] .sampling-stats-container .mt-2 {
+  margin-top: 15px !important;
+}
+
+/* Improve catch-up status and heads display */
+[data-theme="dark"] #catchupStatus,
+[data-theme="dark"] #headOfSampledChain,
+[data-theme="dark"] #headOfCatchup,
+[data-theme="dark"] #networkHeadHeight {
+  display: inline-block;
+  background-color: rgba(140, 127, 240, 0.15);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+/* Add space between worker count and table */
+[data-theme="dark"] .sampling-stats-container strong {
+  margin-right: 8px;
+}
+
+[data-theme="dark"] #workersCount {
+  display: inline-block;
+  background-color: rgba(140, 127, 240, 0.2);
+  padding: 2px 10px;
+  border-radius: 4px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+/* Improve the justify-content-between spacing */
+[data-theme="dark"] .sampling-stats-container .d-flex.justify-content-between {
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+/* Style the "In Progress" status */
+[data-theme="dark"] #catchupStatus {
+  background-color: rgba(13, 110, 253, 0.2);
+  color: #a2c0ff;
+  border: 1px solid rgba(13, 110, 253, 0.3);
+}
+
+/* Improve heading visibility */
+[data-theme="dark"] .sampling-stats-container h5.node-info-title {
+  color: var(--primary-color);
+  font-size: 1.25rem;
+  margin-bottom: 15px;
+}
+
+/* Style for the last updated time */
+[data-theme="dark"] .text-muted {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Improve form help text visibility in dark mode */
+[data-theme="dark"] .form-text {
+  color: rgba(255, 255, 255, 0.75) !important;  /* Brighter than the default muted text */
+}
+
+/* Improve other help text elements visibility */
+[data-theme="dark"] small.text-muted,
+[data-theme="dark"] .text-muted.small {
+  color: rgba(255, 255, 255, 0.75) !important;
+}
+
+/* Improve the worker heading */
+[data-theme="dark"] .sampling-stats-container strong {
+  color: #e0e0e0;
+  font-size: 1.1em;
+  display: block;
+  margin-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 5px;
+}
+
+/* Namespace button group styling for both themes */
+.namespace-options .btn-group {
+  display: flex;
+  border-radius: 0.375rem;
+  overflow: hidden;
+}
+
+.namespace-options .btn-group label.btn {
+  flex: 1;
+  text-align: center;
+  padding: 0.5rem 0.75rem;
+  transition: all 0.2s ease;
+  margin: 0;
+  border: 1px solid #dee2e6;
+}
+
+.namespace-options .btn-group label.btn:not(:last-child) {
+  border-right-color: transparent;
+}
+
+/* Improved button styling for selected and unselected states */
+.namespace-options .btn-check:checked + label.btn {
+  background-color: var(--primary-color);
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  position: relative;
+  z-index: 2;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+.namespace-options .btn-check:not(:checked) + label.btn {
+  background-color: var(--secondary-bg);
+  color: #495057;
+}
+
+.namespace-options .btn-check + label.btn:hover {
+  background-color: rgba(108, 92, 231, 0.1);
+}
+
+/* Specifically target each button for consistent styling in all themes */
+#namespaceTypeBase64:checked + label,
+#namespaceTypePlaintext:checked + label,
+#namespaceTypeRandom:checked + label {
+  background-color: var(--primary-color);
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+#namespaceTypeBase64:not(:checked) + label,
+#namespaceTypePlaintext:not(:checked) + label,
+#namespaceTypeRandom:not(:checked) + label {
+  background-color: var(--secondary-bg);
+  color: #495057;
+}
+
+/* Sampling stats styling for both themes */
+.sampling-stats-container {
+  padding: 20px;
+  border-radius: 10px;
+  background-color: var(--namespace-bg);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin-top: 15px;
+}
+
+.sampling-stats-container .mt-2 {
+  margin-top: 15px !important;
+}
+
+.sampling-stats-container h5.node-info-title {
+  color: var(--primary-color);
+  font-size: 1.25rem;
+  margin-bottom: 15px;
+}
+
+.sampling-stats-container strong {
+  font-size: 1.1em;
+  display: block;
+  margin-bottom: 10px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding-bottom: 5px;
+}
+
+/* Only override specific properties for dark mode */
+[data-theme="dark"] .sampling-stats-container {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .sampling-stats-container strong {
+  color: #e0e0e0;
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Catchup status and measurements */
+#catchupStatus,
+#headOfSampledChain,
+#headOfCatchup,
+#networkHeadHeight {
+  display: inline-block;
+  background-color: rgba(108, 92, 231, 0.1);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+#catchupStatus[data-status="complete"] {
+  background-color: rgba(25, 135, 84, 0.1);
+  color: #198754;
+  border: 1px solid rgba(25, 135, 84, 0.2);
+}
+
+#catchupStatus[data-status="in-progress"] {
+  background-color: rgba(13, 110, 253, 0.1);
+  color: #0d6efd;
+  border: 1px solid rgba(13, 110, 253, 0.2);
+}
+
+/* Worker count styling */
+#workersCount {
+  display: inline-block;
+  background-color: rgba(108, 92, 231, 0.1);
+  padding: 2px 10px;
+  border-radius: 4px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+/* Progress bar styling */
+.sampling-stats-container .progress:not(#workersDetails .progress) {
+  background-color: rgba(0, 0, 0, 0.05);
+  height: 38px;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.sampling-stats-container .progress-bar:not(#workersDetails .progress-bar) {
+  background-color: var(--primary-color);
+  background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent);
+  background-size: 1rem 1rem;
+}
+
+.progress-status-text {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  font-weight: 500;
+}
+
+/* Workers table styling */
+#workersDetails {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 15px;
+  background-color: rgba(255, 255, 255, 0.5);
+  border-radius: 6px;
+  padding: 8px;
+}
+
+#workersDetails table.table {
+  margin-top: 10px;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+#workersDetails table.table th {
+  color: var(--primary-color);
+  background-color: #f8f9fa;
+  padding: 10px;
+  font-weight: 600;
+  border-bottom: 2px solid #dee2e6;
+}
+
+#workersDetails table.table td {
+  padding: 10px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+#workersDetails .progress {
+  height: 10px;
+  margin-bottom: 4px;
+  background-color: rgba(0, 0, 0, 0.05);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+#workersDetails .progress-bar {
+  background-color: var(--primary-color);
+  height: 10px;
+}
+
+#workersDetails .small {
+  font-size: 0.8rem;
+}
+
+/* No active workers message */
+#workersDetails:empty::after,
+#workersDetails:contains("No active workers") {
+  background-color: rgba(0, 0, 0, 0.03);
+  border-radius: 4px;
+  padding: 10px;
+  text-align: center;
+  color: #6c757d;
+}
+
+/* Alternative no active workers message styling */
+#workersDetails {
+  position: relative;
+}
+
+#workersDetails > :not(table) {
+  background-color: rgba(0, 0, 0, 0.03);
+  border-radius: 4px;
+  padding: 10px;
+  text-align: center;
+  color: #6c757d;
+  display: block;
+  width: 100%;
+}
+
+[data-theme="dark"] .database-container .badge.bg-secondary {
+  background-color: #444 !important;
+  color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] .database-container .badge.bg-success {
+  background-color: #198754 !important; 
+  color: white !important;
+}
+
+[data-theme="dark"] .database-container .badge.bg-info {
+  background-color: #0dcaf0 !important;
+  color: #212529 !important;
+}
+
+[data-theme="dark"] .database-container .badge.bg-warning {
+  background-color: #ffc107 !important;
+  color: #212529 !important;
+}
+
+/* Additional dark mode adjustments for consistent font styling */
+[data-theme="dark"] {
+  --font-weight-normal: normal;
+  --font-weight-bold: 500;
+  --font-size-base: 0.85rem;
+  --letter-spacing-normal: normal;
+}
+
+/* Fix heading and font styling in dark mode to match light mode */
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6 {
+  font-weight: var(--font-weight-normal);
+  letter-spacing: var(--letter-spacing-normal);
+}
+
+[data-theme="dark"] .font-weight-bold,
+[data-theme="dark"] .fw-bold,
+[data-theme="dark"] strong,
+[data-theme="dark"] b {
+  font-weight: var(--font-weight-bold) !important;
+}
+
+[data-theme="dark"] .sampling-stats-container strong {
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-base);
+}
+
+[data-theme="dark"] .progress-status-text {
+  font-weight: var(--font-weight-normal) !important;
+  text-shadow: none;
+}
+
+[data-theme="dark"] #workersDetails table.table th {
+  font-weight: var(--font-weight-normal) !important;
+  text-transform: none;
+  letter-spacing: var(--letter-spacing-normal);
+  font-size: var(--font-size-base);
+}
+
+[data-theme="dark"] .worker-panel,
+[data-theme="dark"] .sampling-stats-container {
+  font-size: var(--font-size-base);
+}
+
+[data-theme="dark"] #catchupStatus,
+[data-theme="dark"] #headOfSampledChain,
+[data-theme="dark"] #headOfCatchup,
+[data-theme="dark"] #networkHeadHeight,
+[data-theme="dark"] #samplingStats {
+  font-weight: var(--font-weight-normal);
+}
+
+[data-theme="dark"] .node-info-title {
+  font-size: 1rem;
+  font-weight: var(--font-weight-normal);
+}
+
+[data-theme="dark"] .alert {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-normal);
+}
+
+[data-theme="dark"] .form-label {
+  font-weight: var(--font-weight-normal);
+}
+
+[data-theme="dark"] .btn {
+  font-weight: var(--font-weight-normal);
+  letter-spacing: var(--letter-spacing-normal);
+}
+
+[data-theme="dark"] .badge {
+  font-weight: var(--font-weight-normal);
+  letter-spacing: var(--letter-spacing-normal);
+}
+
+[data-theme="dark"] small, 
+[data-theme="dark"] .small {
+  font-size: 0.8rem;
+}
+
+[data-theme="dark"] .text-muted,
+[data-theme="dark"] .form-text {
+  font-size: 0.8rem;
+}
+
+[data-theme="dark"] .node-info-value {
+  font-family: monospace;
+  font-size: var(--font-size-base);
+}
+
+[data-theme="dark"] .card-header {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-normal);
+}
+
+[data-theme="dark"] .code-container,
+[data-theme="dark"] pre,
+[data-theme="dark"] code {
+  font-size: var(--font-size-base);
+  line-height: 1.4;
+}
+
+/* Fix remaining dark mode font-related inconsistencies */
+[data-theme="dark"] .database-container {
+  font-family: var(--font-family-base);
+}
+
+[data-theme="dark"] .database-container pre,
+[data-theme="dark"] .database-container code,
+[data-theme="dark"] .database-container .code-container,
+[data-theme="dark"] .database-container table pre {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+}
+
+[data-theme="dark"] .database-container table pre {
+  padding: 8px;
+  border-radius: 4px;
+  color: var(--text-color);
+  box-shadow: none;
+}
+
+[data-theme="dark"] .database-container .form-label {
+  font-weight: var(--font-weight-normal);
+  font-size: var(--font-size-base);
+}
+
+[data-theme="dark"] .database-container h4 {
+  font-size: var(--font-size-h4);
+  font-weight: var(--font-weight-normal);
+}
+
+[data-theme="dark"] .database-container h5, 
+[data-theme="dark"] .database-container h6 {
+  font-size: var(--font-size-h5);
+  font-weight: var(--font-weight-normal);
+}
+
+[data-theme="dark"] .database-container table th {
+  font-weight: var(--font-weight-normal);
+  text-transform: none;
+  font-size: var(--font-size-base);
+}
+
+[data-theme="dark"] #lightIcon,
+[data-theme="dark"] #darkIcon {
+  font-size: 1rem;
+}
+
+[data-theme="dark"] .sampling-stats-container strong {
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-base);
+}
+
+/* Remove these duplicate font style variables since they're now in :root */
+[data-theme="dark"] {
+  /* This block was meant to be removed - deleting this empty ruleset */
+}
+
+/* Also standardize the light theme elements that might have inconsistent fonts */
+#lightIcon,
+#darkIcon {
+  font-size: 1rem;
+}
+
+.sampling-stats-container strong {
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-base);
+}
+
+.namespace-options .btn-check:checked + label.btn {
+  font-weight: var(--font-weight-bold);
+}
+
+.namespace-options .btn-check:not(:checked) + label.btn {
+  font-weight: var(--font-weight-normal);
+}
+
+/* Make alert dialogs consistent */
+.alert {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-normal);
+}
+
+/* Progress text styling consistency */
+.progress-status-text {
+  font-weight: var(--font-weight-normal);
+  text-shadow: var(--text-shadow-none);
+}
+
+/* Consistent node info titles */
+.node-info-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-normal);
+}
+
+/* Consistent card headers */
+.card-header {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-normal);
+}
+
+/* Fix the conflicting and redundant dark mode font styles in database section */
+[data-theme="dark"] .database-container h4,
+[data-theme="dark"] .database-container h5,
+[data-theme="dark"] .database-container h6 {
+  color: var(--primary-color);
+  /* Font weight and other properties now come from our standardized selectors */
+}
+
+/* Fix the redundant table header style */
+[data-theme="dark"] .database-container table thead th {
+  color: var(--text-color);
+  background-color: rgba(0,0,0,0.03);
+  border-bottom: 1px solid var(--border-color);
+  /* Font properties now come from standardized selectors */
+}
+
+/* Fix redundant record number styling */
+[data-theme="dark"] .database-container table td:first-child {
+  color: var(--text-color);
+  /* Font weight now comes from standardized selector */
+}
+
+/* Fix database heading redundancy */
+[data-theme="dark"] .database-container h4.mb-3,
+[data-theme="dark"] .database-container .card-header h5.mb-0 {
+  color: var(--primary-color);
+  /* Font size comes from standardized variables */
+}
+
+/* Fix the sampling stats duplication */
+[data-theme="dark"] #catchupStatus,
+[data-theme="dark"] #headOfSampledChain,
+[data-theme="dark"] #headOfCatchup,
+[data-theme="dark"] #networkHeadHeight,
+[data-theme="dark"] #samplingStats {
+  /* Font weight now comes from standardized selectors */
+}
+
+/* Remove duplicate alert styling */
+[data-theme="dark"] .alert {
+  /* Font properties now come from standardized selectors */
+}
+
+/* Remove duplicate form-label styling */
+[data-theme="dark"] .form-label {
+  /* Font properties now come from standardized selectors */
+}
+
+/* Remove duplicate button styling */
+[data-theme="dark"] .btn {
+  /* Font properties now come from standardized selectors */
+}
+
+/* Remove duplicate badge styling */
+[data-theme="dark"] .badge {
+  /* Font properties now come from standardized selectors */
+}
+
+/* Remove duplicate text-muted and form-text styling */
+[data-theme="dark"] .text-muted,
+[data-theme="dark"] .form-text {
+  /* Font properties now come from standardized selectors */
+}
+
+/* Remove duplicate small text styling */
+[data-theme="dark"] small, 
+[data-theme="dark"] .small {
+  /* Font properties now come from standardized selectors */
+}
+
+/* Remove duplicate code container and pre/code styling */
+[data-theme="dark"] .code-container,
+[data-theme="dark"] pre,
+[data-theme="dark"] code {
+  /* Font properties now come from standardized selectors */
+} 

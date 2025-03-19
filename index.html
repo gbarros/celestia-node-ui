@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mammoth Control Panel 🦣</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            padding-top: 2rem;
+        }
+        .container {
+            max-width: 800px;
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .header h1 {
+            color: var(--primary-color);
+        }
+        .form-label {
+            font-weight: 600;
+        }
+        .result-container {
+            margin-top: 2rem;
+            display: none;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 1rem 0;
+        }
+        .spinner-border {
+            color: var(--primary-color);
+        }
+        .error-message {
+            color: #e74c3c;
+            margin-top: 1rem;
+            display: none;
+        }
+        .base64-tools {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+        .result-value {
+            word-break: break-all;
+            font-family: monospace;
+            background-color: var(--secondary-bg);
+            padding: 0.5rem;
+            border-radius: 4px;
+        }
+        .namespace-options {
+            margin-bottom: 1rem;
+        }
+        .namespace-input-group {
+            display: none;
+        }
+        .namespace-input-group.active {
+            display: block;
+        }
+        .btn-generate {
+            margin-left: 0.5rem;
+        }
+        .node-info {
+            background-color: var(--node-info-bg);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+        .node-info-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+        .node-info-value {
+            font-family: monospace;
+            word-break: break-all;
+            background-color: var(--card-bg);
+            padding: 0.75rem;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+        }
+        .node-p2p-details {
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+        .namespace-info {
+            background-color: var(--namespace-bg);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+        .namespace-info h5 {
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+        .hex-display {
+            color: var(--primary-color);
+        }
+        .namespace-preview {
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            display: none;
+        }
+        .namespace-preview.active {
+            display: block;
+        }
+        
+        /* Toast notification styles */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        
+        .toast {
+            background-color: var(--toast-bg);
+            color: var(--toast-color);
+            padding: 12px 24px;
+            border-radius: 4px;
+            margin-top: 10px;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .toast.show {
+            opacity: 1;
+        }
+        
+        /* Styles for the retrieve section */
+        .retrieve-section {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .blob-results {
+            margin-top: 1.5rem;
+            display: none;
+        }
+        
+        .command-box {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background-color: #212529;
+            color: #fff;
+            padding: 0.75rem;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+            font-family: monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+        }
+        
+        .command-box code {
+            flex: 1;
+            white-space: nowrap;
+        }
+        
+        .copy-command {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
+        }
+        
+        /* Code block styles */
+        .card-body code {
+            background-color: #f8f9fa;
+            color: #333;
+            padding: 1rem;
+            border-radius: 4px;
+            display: block;
+            white-space: pre-wrap;
+            word-break: break-all;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+        
+        .card {
+            border: 1px solid rgba(0,0,0,.125);
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid rgba(0,0,0,.125);
+            padding: 0.75rem 1rem;
+        }
+        
+        /* Rotation animation for refresh button */
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .rotating {
+            animation: rotate 0.5s linear;
+        }
+        
+        /* Value change animation */
+        @keyframes highlight-change {
+            0% { background-color: rgba(255, 255, 140, 0.5); }
+            100% { background-color: transparent; }
+        }
+        
+        .value-changed {
+            animation: highlight-change 1.5s ease-out;
+        }
+        
+        /* Stream status indicator */
+        .stream-indicator {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            margin-right: 4px;
+        }
+        
+        .stream-indicator.streaming {
+            background-color: #28a745;
+            box-shadow: 0 0 3px #28a745;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .stream-indicator.stopped {
+            background-color: #dc3545;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+
+        /* Responsive workers details container */
+        @media (min-height: 800px) {
+            #workersDetails {
+                max-height: 400px !important;
+            }
+        }
+        
+        @media (min-height: 1000px) {
+            #workersDetails {
+                max-height: 600px !important;
+            }
+        }
+
+        /* Expanded workers view */
+        #workersDetails.expanded {
+            max-height: 80vh !important;
+            position: absolute;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 15px;
+            z-index: 100;
+            width: 90%;
+            left: 5%;
+            transition: max-height 0.3s ease-in-out;
+        }
+
+        .workers-container {
+            position: relative;
+        }
+
+        /* Control buttons styling */
+        .controls-container button {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            height: 28px;
+            text-transform: uppercase;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+        
+        .controls-container .badge {
+            padding: 0.35rem 0.5rem;
+            height: 28px;
+            font-weight: normal;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            border-radius: 4px;
+        }
+
+        /* Overall container styling */
+        .stats-header {
+            margin-bottom: 12px;
+        }
+
+        /* Live button styling */
+        .live-button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            height: 28px;
+            text-transform: uppercase;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+        
+        .live-button.btn-outline-success {
+            background-color: transparent;
+            border: 1px solid #28a745;
+            color: #28a745;
+        }
+        
+        .live-button.btn-outline-danger {
+            background-color: transparent;
+            border: 1px solid #dc3545;
+            color: #dc3545;
+        }
+        
+        /* Progress bar status text styling */
+        .progress-status-text {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            line-height: 38px;
+            color: #333;
+            text-shadow: 0 0 3px rgba(255,255,255,0.8);
+            font-weight: 600;
+            z-index: 5;
+        }
+        
+        /* Adjust text color based on progress bar state */
+        .progress-bar.bg-success ~ .progress-status-text {
+            color: #fff;
+            text-shadow: 0 0 3px rgba(0,0,0,0.7);
+        }
+        
+        .progress-bar.bg-danger ~ .progress-status-text {
+            color: #fff;
+            text-shadow: 0 0 3px rgba(0,0,0,0.7);
+        }
+        
+        /* Better contrast for warning state */
+        .progress-bar.bg-warning {
+            background-color: #ffab00 !important;
+        }
+        
+        /* Sampling tab styles */
+        .sampling-stats-container {
+            background-color: #e0f3ea;
+            border-radius: 10px;
+            padding: 1rem;
+        }
+        
+        /* Tab navigation styles */
+        .nav-tabs {
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .nav-tabs .nav-link {
+            color: #495057;
+            border: 1px solid transparent;
+            border-top-left-radius: 0.25rem;
+            border-top-right-radius: 0.25rem;
+            padding: 0.5rem 1rem;
+            margin-right: 0.25rem;
+            font-weight: 500;
+        }
+        
+        .nav-tabs .nav-link:hover, .nav-tabs .nav-link:focus {
+            border-color: #e9ecef #e9ecef #dee2e6;
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: #6c5ce7;
+            background-color: #fff;
+            border-color: #dee2e6 #dee2e6 #fff;
+            border-bottom: 2px solid #6c5ce7;
+        }
+        
+        .tab-content {
+            padding: 0.5rem 0;
+        }
+        
+        .tab-pane {
+            display: none;
+        }
+        
+        .tab-pane.active {
+            display: block;
+        }
+        
+        /* Code container styles */
+        .code-container {
+            max-height: 300px;
+            overflow-y: auto;
+            overflow-x: auto;
+            border-radius: 4px;
+            margin-top: 10px;
+            border: 1px solid rgba(0,0,0,0.125);
+        }
+        
+        [data-theme="light"] .code-container {
+            background-color: #f8f9fa;
+        }
+        
+        [data-theme="dark"] .code-container {
+            background-color: #2d2d2d;
+            border-color: #444;
+        }
+        
+        [data-theme="dark"] .code-container pre code {
+            color: #e6e6e6;
+        }
+        
+        .transfer-section {
+            background-color: var(--transfer-bg);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        [data-theme="light"] .transfer-section {
+            background-color: #e8f4fd;
+        }
+        
+        [data-theme="dark"] .transfer-section {
+            background-color: #1e2a38;
+        }
+        
+        .transfer-section h4 {
+            color: var(--primary-color);
+            margin-bottom: 1.25rem;
+        }
+        
+        #transferLoading {
+            margin: 1rem 0;
+        }
+
+        /* Database tab dark mode styles */
+        [data-theme="dark"] .database-container .bg-light {
+            background-color: #2d2d2d !important;
+            color: #e6e6e6;
+        }
+
+        [data-theme="dark"] .database-container .alert-secondary {
+            background-color: #3a3a3a;
+            color: #e6e6e6;
+            border-color: #444;
+        }
+
+        [data-theme="dark"] .database-container pre {
+            background-color: #222;
+            color: #e6e6e6;
+            border-color: #444;
+        }
+
+        [data-theme="dark"] .table {
+            color: #e6e6e6;
+        }
+
+        [data-theme="dark"] .table-striped tbody tr:nth-of-type(odd) {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        [data-theme="dark"] .table-hover tbody tr:hover {
+            background-color: rgba(255, 255, 255, 0.075);
+        }
+        
+        /* Enhanced dark mode styles for database tab */
+        [data-theme="dark"] .database-container .table pre {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            border: 1px solid #333;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        
+        [data-theme="dark"] .database-container .code-container {
+            background-color: #1a1a1a !important;
+            border-color: #333 !important;
+        }
+        
+        [data-theme="dark"] .database-container .code-container pre code {
+            color: #e0e0e0;
+        }
+        
+        [data-theme="dark"] #recordsTable {
+            border-color: #444;
+        }
+        
+        [data-theme="dark"] #recordsTable th {
+            background-color: #2a2a2a;
+            color: #e0e0e0;
+            border-bottom: 2px solid #444;
+        }
+        
+        [data-theme="dark"] #recordsTable td {
+            border-color: #444;
+        }
+        
+        [data-theme="dark"] .database-container .badge.bg-success {
+            background-color: #28a745 !important;
+        }
+        
+        [data-theme="dark"] .database-container .badge.bg-secondary {
+            background-color: #555 !important;
+        }
+        
+        /* Complete dark mode styling for Database tab */
+        [data-theme="dark"] .database-container {
+            color: #e6e6e6;
+        }
+        
+        [data-theme="dark"] .database-container .card {
+            background-color: #2d2d2d;
+            border-color: #444;
+            color: #e6e6e6;
+        }
+        
+        [data-theme="dark"] .database-container .card-header {
+            background-color: #222;
+            border-color: #444;
+            color: #e6e6e6;
+        }
+        
+        [data-theme="dark"] .database-container .card-body {
+            background-color: #2d2d2d;
+            color: #e6e6e6;
+        }
+        
+        [data-theme="dark"] .database-container textarea,
+        [data-theme="dark"] .database-container input[type="text"],
+        [data-theme="dark"] .database-container input[type="number"],
+        [data-theme="dark"] .database-container select {
+            background-color: #333;
+            border-color: #555;
+            color: #e6e6e6;
+        }
+        
+        [data-theme="dark"] .database-container .form-text {
+            color: #aaa;
+        }
+        
+        [data-theme="dark"] .database-container .alert-info {
+            background-color: #1e3a5f;
+            border-color: #2a5485;
+            color: #e6e6e6;
+        }
+        
+        [data-theme="dark"] .database-container .alert-success {
+            background-color: #1e4620;
+            border-color: #2a6236;
+            color: #e6e6e6;
+        }
+        
+        [data-theme="dark"] .database-container .hex-display {
+            color: #8be9fd;
+        }
+        
+        [data-theme="dark"] #schemaViewSection .code-container {
+            background-color: #1a1a1a !important;
+        }
+        
+        [data-theme="dark"] .database-container h4,
+        [data-theme="dark"] .database-container h5,
+        [data-theme="dark"] .database-container h6 {
+            color: var(--primary-color, #6c5ce7);
+        }
+        
+        [data-theme="dark"] .database-container .form-label {
+            color: #f8f9fa;
+        }
+        
+        [data-theme="dark"] .database-container hr {
+            border-color: #444;
+        }
+        
+        [data-theme="dark"] .database-container .input-group-text {
+            background-color: #444;
+            border-color: #555;
+            color: #e6e6e6;
+        }
+        
+        [data-theme="dark"] .database-container .btn-outline-secondary {
+            color: #e6e6e6;
+            border-color: #555;
+        }
+        
+        [data-theme="dark"] .database-container .btn-outline-secondary:hover {
+            background-color: #444;
+            color: #fff;
+        }
+        
+        /* Fix for white table rows in database tab */
+        [data-theme="dark"] .database-container table {
+            background-color: #2d2d2d;
+            color: #e6e6e6;
+        }
+        
+        [data-theme="dark"] .database-container table thead th {
+            background-color: #222;
+            color: #e6e6e6;
+            border-color: #444;
+        }
+        
+        [data-theme="dark"] .database-container table tbody tr {
+            background-color: #2d2d2d;
+            color: #e6e6e6;
+        }
+        
+        [data-theme="dark"] .database-container table tbody tr:nth-of-type(odd) {
+            background-color: #333;
+        }
+        
+        [data-theme="dark"] .database-container table tbody td {
+            border-color: #444;
+            background-color: transparent;
+        }
+        
+        [data-theme="dark"] .database-container table tbody tr:hover {
+            background-color: #444;
+        }
+        
+        /* Font styling fixes for database tab */
+        [data-theme="dark"] .database-container {
+            font-family: var(--font-family-base);
+        }
+        
+        [data-theme="dark"] .database-container pre,
+        [data-theme="dark"] .database-container code,
+        [data-theme="dark"] .database-container .code-container,
+        [data-theme="dark"] .database-container table pre {
+            font-family: var(--font-family-mono);
+            font-size: var(--font-size-base);
+            line-height: var(--line-height-base);
+            color: var(--text-color);
+        }
+        
+        [data-theme="dark"] .database-container table pre {
+            padding: 8px;
+            border-radius: 4px;
+            background-color: #1a1a1a;
+            color: var(--text-color);
+            box-shadow: none;
+            margin: 0;
+            border: 1px solid #333;
+        }
+        
+        [data-theme="dark"] .database-container .form-label {
+            font-weight: var(--font-weight-normal);
+            margin-bottom: 0.5rem;
+            color: var(--text-color);
+        }
+        
+        [data-theme="dark"] .database-container h4 {
+            font-size: var(--font-size-h4);
+            font-weight: var(--font-weight-normal);
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        [data-theme="dark"] .database-container h5, 
+        [data-theme="dark"] .database-container h6 {
+            font-size: var(--font-size-h5);
+            font-weight: var(--font-weight-normal);
+            color: var(--primary-color);
+            margin-bottom: 0.75rem;
+        }
+        
+        [data-theme="dark"] .database-container table th {
+            font-weight: var(--font-weight-normal);
+            text-transform: none;
+            font-size: var(--font-size-base);
+            letter-spacing: var(--letter-spacing-normal);
+            color: var(--text-color);
+        }
+        
+        [data-theme="dark"] .database-container .badge {
+            font-weight: var(--font-weight-normal);
+            letter-spacing: var(--letter-spacing-normal);
+        }
+        
+        /* Improve contrast for dark mode */
+        [data-theme="dark"] .database-container table tbody td {
+            color: #e6e6e6;
+        }
+        
+        [data-theme="dark"] #recordsTable th,
+        [data-theme="dark"] .database-container table thead th {
+            background-color: #222;
+            color: #e6e6e6;
+        }
+        
+        [data-theme="dark"] .database-container table pre {
+            background-color: #1a1a1a;
+            color: #e6e6e6;
+            box-shadow: none;
+            border: 1px solid #333;
+            padding: 8px;
+        }
+        
+        [data-theme="dark"] .database-container .table-hover tbody tr:hover {
+            background-color: #3a3a3a !important;
+        }
+        
+        /* Section titles in database tab - more consistent with light mode */
+        [data-theme="dark"] .database-container h4,
+        [data-theme="dark"] .database-container h5,
+        [data-theme="dark"] .database-container h6 {
+            color: var(--primary-color, #6c5ce7);
+        }
+        
+        /* Brighter text for table headers and cell content */
+        [data-theme="dark"] .database-container table th,
+        [data-theme="dark"] .database-container td {
+            color: #e6e6e6;
+        }
+        
+        /* Improve record number contrast */
+        [data-theme="dark"] .database-container table td:first-child {
+            font-weight: normal;
+            color: #e6e6e6;
+        }
+        
+        /* Fix database headings to match light mode */
+        [data-theme="dark"] .database-container h4,
+        [data-theme="dark"] .database-container h5,
+        [data-theme="dark"] .database-container h6 {
+            font-weight: normal;
+            color: var(--primary-color, #6c5ce7);
+            text-transform: none;
+            letter-spacing: normal;
+        }
+        
+        /* Database main heading (Database Records) */
+        [data-theme="dark"] .database-container h4.mb-3,
+        [data-theme="dark"] .database-container .card-header h5.mb-0 {
+            font-size: 1.25rem;
+            color: var(--primary-color, #6c5ce7);
+            letter-spacing: normal;
+            text-transform: none;
+        }
+        
+        /* Table column headers */
+        [data-theme="dark"] .database-container table thead th {
+            font-weight: normal;
+            color: #e6e6e6;
+            background-color: rgba(0,0,0,0.03);
+            text-transform: none;
+            letter-spacing: normal;
+            font-size: 0.85rem;
+            border-bottom: 1px solid #444;
+        }
+    </style>
+</head>
+<body>
+    <!-- Dark Mode Toggle -->
+    <div class="theme-toggle" id="themeToggle">
+        <i class="bi bi-sun-fill" id="lightIcon"></i>
+        <i class="bi bi-moon-fill" id="darkIcon" style="display: none;"></i>
+    </div>
+    <div class="container">
+        <div class="header">
+            <h1>Mammoth Control Panel 🦣</h1>
+            <p class="text-muted">Post data blobs to the Celestia network, access your light node's wallet, and run a private database rollup!</p>
+        </div>
+        
+        <!-- Tab navigation -->
+        <ul class="nav nav-tabs" id="mainTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="blob-poster-tab" data-bs-toggle="tab" data-bs-target="#blobPosterTab" type="button" role="tab" aria-controls="blobPosterTab" aria-selected="true">Blob Poster</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="node-info-tab" data-bs-toggle="tab" data-bs-target="#nodeInfoTab" type="button" role="tab" aria-controls="nodeInfoTab" aria-selected="false">Node Info</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="sampling-stats-tab" data-bs-toggle="tab" data-bs-target="#samplingStatsTab" type="button" role="tab" aria-controls="samplingStatsTab" aria-selected="false">Sampling Stats</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="database-tab" data-bs-toggle="tab" data-bs-target="#databaseTab" type="button" role="tab" aria-controls="databaseTab" aria-selected="false">Private Database Rollup</button>
+            </li>
+        </ul>
+        
+        <!-- Tab content -->
+        <div class="tab-content" id="mainTabsContent">
+            <!-- Blob Poster Tab -->
+            <div class="tab-pane fade show active" id="blobPosterTab" role="tabpanel" aria-labelledby="blob-poster-tab">
+                <h4>Post Blob Data</h4>
+                <div class="d-flex align-items-center mb-3">
+                    <h5 class="mb-0">Namespace <i class="bi bi-info-circle text-secondary" style="font-size: 1rem; cursor: pointer; vertical-align: middle; margin-left: 4px;" data-bs-toggle="modal" data-bs-target="#namespaceInfoModal"></i></h5>
+                </div>
+
+                <!-- Namespace Info Modal -->
+                <div class="modal fade" id="namespaceInfoModal" tabindex="-1" aria-labelledby="namespaceInfoModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="namespaceInfoModalLabel">Celestia Namespace Format</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Celestia namespaces must follow a specific format:</p>
+                                <ul>
+                                    <li>Total length: 29 bytes (1 byte version + 28 bytes ID)</li>
+                                    <li>Version 0: Must have 18 leading zero bytes in the ID</li>
+                                    <li>Reserved namespaces cannot be used</li>
+                                </ul>
+                                <p class="mb-0">The options below will automatically create valid namespaces for you.</p>
+                                <p class="mt-2">
+                                    <a href="https://mocha.celenium.io/namespace/0000000000000000000000000000000000006c6f75642d70656e2d32?tab=Blobs" target="_blank">View example namespace on Celenium Explorer</a>
+                                </p>
+                                <p class="mt-2">
+                                    <a href="https://celestiaorg.github.io/celestia-app/namespace.html" target="_blank">Read official Celestia namespace documentation</a>
+                                </p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="blobForm">
+                    <div class="namespace-options">
+                        <div class="btn-group" role="group" aria-label="Namespace input options">
+                            <input type="radio" class="btn-check" name="namespaceType" id="namespaceTypeBase64" value="base64" checked>
+                            <label class="btn btn-outline-primary" for="namespaceTypeBase64">Base64</label>
+                            
+                            <input type="radio" class="btn-check" name="namespaceType" id="namespaceTypePlaintext" value="plaintext">
+                            <label class="btn btn-outline-primary" for="namespaceTypePlaintext">Plaintext</label>
+                            
+                            <input type="radio" class="btn-check" name="namespaceType" id="namespaceTypeRandom" value="random">
+                            <label class="btn btn-outline-primary" for="namespaceTypeRandom">Random</label>
+                        </div>
+                    </div>
+
+                    <div id="base64NamespaceInput" class="namespace-input-group active mb-3">
+                        <label for="namespace" class="form-label">Namespace (base64)</label>
+                        <input type="text" class="form-control" id="namespace" placeholder="Enter namespace in base64 format">
+                        <div class="form-text">Must be a valid Celestia namespace (29 bytes with version 0 and 18 leading zero bytes in ID)</div>
+                        <div id="base64NamespacePreview" class="namespace-preview">
+                            <strong>Hex:</strong> <span id="base64NamespaceHex" class="hex-display"></span>
+                        </div>
+                    </div>
+
+                    <div id="plaintextNamespaceInput" class="namespace-input-group mb-3">
+                        <label for="plaintextNamespace" class="form-label">Namespace (plaintext)</label>
+                        <input type="text" class="form-control" id="plaintextNamespace" placeholder="Enter plaintext namespace (max 10 characters)" maxlength="10">
+                        <div class="form-text">Enter up to 10 characters (10 bytes). Will be automatically converted to a valid Celestia namespace with 18 leading zero bytes.</div>
+                        <div id="plaintextNamespacePreview" class="namespace-preview">
+                            <strong>Hex:</strong> <span id="plaintextNamespaceHex" class="hex-display"></span>
+                        </div>
+                    </div>
+
+                    <div id="randomNamespaceInput" class="namespace-input-group mb-3">
+                        <label for="randomNamespace" class="form-label">Random Namespace</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="randomNamespace" placeholder="Random namespace will appear here" readonly>
+                            <button class="btn btn-outline-secondary btn-generate" type="button" id="generateNamespaceBtn">Generate</button>
+                        </div>
+                        <div class="form-text">Automatically generated valid Celestia namespace</div>
+                        <div id="randomNamespacePreview" class="namespace-preview active">
+                            <strong>Hex:</strong> <span id="randomNamespaceHex" class="hex-display"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="data" class="form-label">Data (base64)</label>
+                        <textarea class="form-control" id="data" rows="5" placeholder="Enter data in base64 format" required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="gasPrice" class="form-label">Gas Price (optional)</label>
+                        <input type="number" class="form-control" id="gasPrice" placeholder="0.002" step="0.001" min="0">
+                        <div class="form-text">Default: 0.002</div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Submit Blob</button>
+                </form>
+                
+                <!-- Result container for blob submission -->
+                <div id="resultContainer" class="result-container mt-4">
+                    <h5>Blob Successfully Submitted:</h5>
+                    <div class="alert alert-success">
+                        <p><strong>Height:</strong> <span id="resultHeight" class="result-value"></span></p>
+                        <p><strong>Namespace (Hex):</strong> <span id="resultNamespaceHex" class="result-value"></span> <a id="resultNamespaceLink" href="#" target="_blank" class="ms-2 small">View on Explorer</a></p>
+                        <p><strong>Namespace (Base64):</strong> <span id="resultNamespaceBase64" class="result-value"></span></p>
+                    </div>
+                </div>
+                
+                <!-- Error message for blob submission -->
+                <div id="errorMessage" class="error-message mt-3 alert alert-danger"></div>
+                
+                <!-- Loading indicator for blob submission -->
+                <div class="loading" id="loading">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <div>Submitting blob data...</div>
+                </div>
+                
+                <div class="retrieve-section">
+                    <h4>Retrieve Blob Data</h4>
+                    <form id="retrieveForm">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="retrieveHeight" class="form-label">Block Height</label>
+                                <input type="number" class="form-control" id="retrieveHeight" placeholder="Block height">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="retrieveNamespace" class="form-label">Namespace (hex)</label>
+                                <input type="text" class="form-control" id="retrieveNamespace" placeholder="Namespace in hex format">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="retrieveCommitment" class="form-label">Commitment (optional)</label>
+                            <input type="text" class="form-control" id="retrieveCommitment" placeholder="Data commitment (optional)">
+                            <div class="form-text">If provided, will verify the retrieved data matches this commitment</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="retrieveButton">Retrieve Blob</button>
+                    </form>
+                    <div class="loading" id="retrieveLoading">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <div>Retrieving blob data...</div>
+                    </div>
+                    <div class="error-message" id="retrieveError"></div>
+                    <div class="blob-results mt-4" id="blobResults">
+                        <h5>Retrieved Blob Data:</h5>
+                        <div class="alert alert-info">
+                            <p><strong>Commitment:</strong> <span id="fetchedCommitment" class="result-value"></span></p>
+                            <p><strong>Namespace:</strong> <span id="fetchedNamespace" class="result-value"></span> <a id="fetchedNamespaceLink" href="#" target="_blank" class="ms-2 small">View on Explorer</a></p>
+                            <p><strong>Data:</strong></p>
+                            <div class="code-container" style="max-height: 300px; overflow-y: auto; overflow-x: auto; background-color: #f8f9fa; border-radius: 4px; margin-top: 10px;">
+                                <pre style="margin: 0; padding: 0;"><code id="fetchedData" class="result-value" style="display: block; padding: 15px; white-space: pre-wrap; word-wrap: break-word; margin-bottom: 0;"></code></pre>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <h6>Try It Yourself:</h6>
+                            <p>Use these commands to fetch the same blob data using celestia-node CLI or curl:</p>
+                            <small class="text-muted mb-3 d-block">Note: CLI uses hex for both namespace and commitment, while API calls use base64 for both</small>
+                            
+                            <div class="card mb-3">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <span>CLI</span>
+                                    <button class="btn btn-sm btn-outline-secondary" id="copyCLICommand">Copy</button>
+                                </div>
+                                <div class="card-body">
+                                    <code id="cliCommand" class="d-block">celestia blob get <span id="cliHeight">height</span> <span id="cliNamespace">namespace</span> <span id="cliCommitment">commitment</span></code>
+                                </div>
+                            </div>
+                            
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <span>Curl Command</span>
+                                    <button class="btn btn-sm btn-outline-secondary" id="copyCurlCommand">Copy</button>
+                                </div>
+                                <div class="card-body">
+                                    <code id="curlCommand" class="d-block">curl -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","id":1,"method":"blob.Get","params":[<span id="curlHeight">height</span>, "<span id="curlNamespace">namespace</span>", "<span id="curlCommitment">commitment</span>"]}' http://localhost:26658</code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="base64-tools">
+                    <h5>Base64 Encoding Tools</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="rawText" class="form-label">Raw Text</label>
+                                <textarea class="form-control" id="rawText" rows="3" placeholder="Enter text to encode to base64"></textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="encodedText" class="form-label">Base64 Result</label>
+                                <textarea class="form-control" id="encodedText" rows="3" placeholder="Enter base64 to decode to text"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-muted small mb-2">Click on either text box to copy its contents</div>
+                </div>
+            </div>
+            
+            <!-- Node Info Tab -->
+            <div class="tab-pane fade" id="nodeInfoTab" role="tabpanel" aria-labelledby="node-info-tab">
+                <h4 class="mb-3">Connected Node Information</h4>
+                <div class="node-info">
+                    <div class="node-info-title">Node Address:</div>
+                    <div id="nodeAddress" class="node-info-value">Loading...</div>
+                    <div class="node-info-title mt-3">P2P ID:</div>
+                    <div id="nodeP2PInfo" class="node-info-value">Loading...</div>
+                    <div id="nodeP2PDetails" class="node-p2p-details"></div>
+                    <div class="node-info-title mt-3">Account Balance:</div>
+                    <div id="nodeBalance" class="node-info-value">Loading...</div>
+                </div>
+                
+                <!-- Transfer Section -->
+                <div class="transfer-section mt-4">
+                    <h4 class="mb-3">Send TIA</h4>
+                    <form id="transferForm">
+                        <div class="mb-3">
+                            <label for="recipientAddress" class="form-label">Recipient Address</label>
+                            <input type="text" class="form-control" id="recipientAddress" placeholder="Enter Celestia address" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="transferAmount" class="form-label">Amount (TIA)</label>
+                            <input type="number" class="form-control" id="transferAmount" placeholder="0.01" step="0.000001" min="0.000001" required>
+                            <div class="form-text">Amount in TIA (minimum 0.000001 TIA = 1 utia)</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="gasAdjustment" class="form-label">Gas Adjustment (optional)</label>
+                            <input type="number" class="form-control" id="gasAdjustment" placeholder="1.3" step="0.1" min="1.0" value="1.3">
+                            <div class="form-text">Multiplier for gas estimation (default: 1.3)</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="transferButton">Send TIA</button>
+                    </form>
+                    
+                    <!-- Loading indicator for transfer -->
+                    <div class="loading" id="transferLoading">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <div>Processing transfer...</div>
+                    </div>
+                    
+                    <!-- Error message for transfer -->
+                    <div id="transferError" class="error-message mt-3 alert alert-danger" style="display: none;"></div>
+                    
+                    <!-- Success message for transfer -->
+                    <div id="transferSuccess" class="mt-3 alert alert-success" style="display: none;">
+                        <strong>Transfer successful!</strong> 
+                        <p class="mb-0">The TIA has been sent to the recipient's address.</p>
+                        <p class="mt-2 mb-0"><strong>Transaction Hash:</strong> <span id="transferTxHash"></span></p>
+                        <p class="mt-1"><a id="transferExplorerLink" href="#" target="_blank">View transaction on explorer</a></p>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info mt-4">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    <span>This information is fetched from the Celestia node you're connected to (default is localhost:26658).</span>
+                </div>
+            </div>
+            
+            <!-- Sampling Stats Tab -->
+            <div class="tab-pane fade" id="samplingStatsTab" role="tabpanel" aria-labelledby="sampling-stats-tab">
+                <div class="sampling-stats-container">
+                    <div class="d-flex justify-content-between align-items-center stats-header">
+                        <h5 class="node-info-title m-0">Sampling Syncer Stats:</h5>
+                        <div class="d-flex align-items-center gap-2 controls-container">
+                            <button id="toggleLiveButton" class="btn btn-sm btn-success d-flex align-items-center gap-1 live-button" title="Toggle live updates">
+                                <span class="stream-indicator streaming"></span>
+                                <span>LIVE</span>
+                            </button>
+                            <button id="refreshSamplingStats" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1" title="Refresh stats">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                                    <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                                </svg>
+                                <span>REFRESH</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="text-end small text-muted mt-1 mb-2">
+                        Last updated: <span id="lastUpdatedTime">-</span>
+                    </div>
+                    <div class="mt-2">
+                        <strong>Sync Progress:</strong>
+                        <div class="progress mt-1 position-relative" style="height: 38px; background-color: #e9ecef;">
+                            <div id="syncProgressBar" class="progress-bar progress-bar-striped progress-bar-animated d-flex align-items-center justify-content-end pe-2" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%"></div>
+                            <div id="samplingStats" class="progress-status-text">Loading...</div>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <strong>Catch-up Status:</strong> <span id="catchupStatus">-</span>
+                    </div>
+                    <div class="mt-2 d-flex justify-content-between">
+                        <span><strong>Head of Sampled Chain:</strong> <span id="headOfSampledChain">-</span></span>
+                        <span><strong>Head of Catchup:</strong> <span id="headOfCatchup">-</span></span>
+                        <span><strong>Network Head Height:</strong> <span id="networkHeadHeight">-</span></span>
+                    </div>
+                    <div class="mt-2">
+                        <strong>Workers:</strong> <span id="workersCount">-</span>
+                        <div class="workers-container">
+                            <div id="workersDetails" class="mt-2" style="max-height: 300px; overflow-y: auto; font-size: 0.85rem;"></div>
+                            <button id="expandWorkersBtn" class="btn btn-sm btn-outline-secondary mt-1 d-none">
+                                <i class="bi bi-arrows-angle-expand"></i> Expand
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Database Tab -->
+            <div class="tab-pane fade" id="databaseTab" roif le="tabpanel" aria-labelledby="database-tab">
+                <div class="database-container">
+                    <h4 class="mb-3">Celestia Private Database Rollup</h4>
+                    
+                    <div class="alert alert-info mb-4">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <span>Store and retrieve data using Celestia blobs as a database. All data is stored in a consistent namespace for easy retrieval.</span>
+                    </div>
+                    
+                    <!-- Initialize Database Section -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Initialize Database</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="initDbForm">
+                                <div class="mb-3">
+                                    <label for="dbNamespace" class="form-label">Database Namespace</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="dbNamespace" placeholder="Enter a unique namespace for your database" required>
+                                        <button class="btn btn-outline-secondary" type="button" id="generateDbNamespaceBtn">Generate</button>
+                                    </div>
+                                    <div class="form-text">This namespace will be used for all your database blobs</div>
+                                    <div class="mt-2" id="dbNamespacePreview">
+                                        <strong>Hex:</strong> <span id="dbNamespaceHex" class="hex-display"></span>
+                                    </div>
+                                </div>
+                                
+                                <div class="alert alert-info">
+                                    <i class="bi bi-shield-lock"></i> Your database will be encrypted with a unique token stored in your browser. 
+                                    If you clear your browser data or the database cache, a new token will be generated, and you won't be able to 
+                                    decrypt previously stored data.
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="dbSchema" class="form-label">Database Schema (JSON)</label>
+                                    <textarea class="form-control" id="dbSchema" rows="5" placeholder='{"users":{"id":"string","name":"string","email":"string"}}' required></textarea>
+                                    <div class="form-text">Define your database schema as a JSON object</div>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary" id="initDbButton">Initialize Database</button>
+                            </form>
+                            
+                            <!-- Loading indicator for database initialization -->
+                            <div class="loading" id="initDbLoading" style="display: none;">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <div>Initializing database...</div>
+                            </div>
+                            
+                            <!-- Success message for database initialization -->
+                            <div id="initDbSuccess" class="mt-3 alert alert-success" style="display: none;">
+                                <strong>Database initialized successfully!</strong>
+                                <p class="mb-0">Your database has been created with the specified schema.</p>
+                                <p class="mt-2 mb-0"><strong>Namespace:</strong> <span id="initDbNamespace"></span></p>
+                                <p class="mt-1"><strong>Height:</strong> <span id="initDbHeight"></span></p>
+                            </div>
+                            
+                            <!-- Error message for database initialization -->
+                            <div id="initDbError" class="mt-3 alert alert-danger" style="display: none;"></div>
+                            
+                            <!-- Schema View Section -->
+                            <div id="schemaViewSection" class="mt-4" style="display: none;">
+                                <h6>Database Schema</h6>
+                                
+                                <!-- Loading indicator for schema -->
+                                <div class="text-center my-3" id="schemaLoading" style="display: none;">
+                                    <div class="spinner-border text-primary" role="status"></div>
+                                    <div class="mt-2">Loading schema...</div>
+                                </div>
+                                
+                                <!-- Error message for schema retrieval -->
+                                <div class="alert alert-danger my-3" id="schemaError" style="display: none;"></div>
+                                
+                                <div class="card">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <span>Schema Definition</span>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-8">
+                                                <pre class="code-container mb-0"><code id="schemaDisplay">Loading schema...</code></pre>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="bg-light p-3 rounded">
+                                                    <h6 class="mb-2">Schema Metadata</h6>
+                                                    <div id="schemaMetadata">
+                                                        <strong>Created:</strong> Loading...<br>
+                                                        <strong>Version:</strong> Loading...<br>
+                                                        <strong>Height:</strong> Loading...
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Database Operations Section -->
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Database Records</h5>
+                            <button class="btn btn-sm btn-outline-primary" id="refreshDbBtn">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <!-- Database Info Panel -->
+                            <div id="dbInfoPanel" class="mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0">Database Information</h6>
+                                    <span class="badge bg-primary" id="dbRecordCount">0 Records</span>
+                                </div>
+                                <div class="bg-light p-3 rounded">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p class="mb-1"><strong>Namespace:</strong> <span id="dbInfoNamespace">Not set</span></p>
+                                            <p class="mb-1"><strong>Schema Height:</strong> <span id="dbInfoSchemaHeight">Not set</span></p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p class="mb-1"><strong>Last Updated:</strong> <span id="dbInfoLastUpdated">Never</span></p>
+                                            <p class="mb-1"><strong>Status:</strong> <span class="badge bg-secondary" id="dbInfoStatus">Not Initialized</span></p>
+                                            <p class="mb-1"><strong>Encryption:</strong> <span class="badge bg-info" id="dbEncryptionStatus">Not Encrypted</span></p>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2 d-flex justify-content-end">
+                                        <button id="clearDbCacheBtn" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i> Clear Database Cache
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Add Record Form -->
+                            <div class="mb-4">
+                                <h6>Add New Record</h6>
+                                <form id="addRecordForm">
+                                    <div class="mb-3">
+                                        <label for="recordData" class="form-label">Record Data (JSON)</label>
+                                        <textarea class="form-control" id="recordData" rows="3" placeholder='{"name": "John Doe", "age": 30, "active": true}' required></textarea>
+                                        <div class="form-text">Enter data according to your database schema</div>
+                                    </div>
+                                    <button type="submit" class="btn btn-success" id="addRecordBtn">Add Record</button>
+                                </form>
+                                
+                                <!-- Loading indicator for adding records -->
+                                <div class="loading" id="addRecordLoading" style="display: none;">
+                                    <div class="spinner-border" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <div>Adding record...</div>
+                                </div>
+                                
+                                <!-- Error message for adding records -->
+                                <div id="addRecordError" class="mt-3 alert alert-danger" style="display: none;"></div>
+                            </div>
+                            
+                            <!-- Records Display -->
+                            <div>
+                                <h6>Database Records</h6>
+                                <!-- Loading indicator for records -->
+                                <div class="text-center my-4" id="recordsLoading" style="display: none;">
+                                    <div class="spinner-border text-primary" role="status"></div>
+                                    <div class="mt-2">Loading records...</div>
+                                </div>
+                                
+                                <!-- Error message for records retrieval -->
+                                <div class="alert alert-danger my-3" id="recordsError" style="display: none;"></div>
+                                
+                                <!-- No records message -->
+                                <div class="alert alert-secondary text-center" id="noRecordsMsg" style="display: none;">
+                                    No records found in this database. Add a record using the form above.
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover" id="recordsTable" style="display: none;">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">#</th>
+                                                <th scope="col">Data</th>
+                                                <th scope="col">Height</th>
+                                                <th scope="col">Timestamp</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="recordsTableBody">
+                                            <!-- Records will be inserted here dynamically -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add toast container at the end of body -->
+    <div class="toast-container" id="toastContainer"></div>
+    
+    <script type="module" src="./index.js"></script>
+    
+    <!-- Bootstrap JS for tab functionality -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('themeToggle');
+        const lightIcon = document.getElementById('lightIcon');
+        const darkIcon = document.getElementById('darkIcon');
+        const htmlElement = document.documentElement;
+        
+        // Check for saved theme preference or use OS preference
+        function getPreferredTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                return savedTheme;
+            }
+            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        
+        // Apply theme
+        function applyTheme(theme) {
+            htmlElement.setAttribute('data-theme', theme);
+            if (theme === 'dark') {
+                lightIcon.style.display = 'none';
+                darkIcon.style.display = 'block';
+            } else {
+                lightIcon.style.display = 'block';
+                darkIcon.style.display = 'none';
+            }
+            localStorage.setItem('theme', theme);
+        }
+        
+        // Initialize theme
+        applyTheme(getPreferredTheme());
+        
+        // Toggle theme on click
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = htmlElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            applyTheme(newTheme);
+        });
+        
+        // Listen for OS theme changes
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            if (!localStorage.getItem('theme')) { // Only apply if user hasn't manually set preference
+                applyTheme(e.matches ? 'dark' : 'light');
+            }
+        });
+        
+        // Update Bootstrap elements for dark mode
+        function updateBootstrapForDarkMode(isDark) {
+            const cards = document.querySelectorAll('.card');
+            const formControls = document.querySelectorAll('.form-control, .form-select');
+            const btnOutlines = document.querySelectorAll('.btn-outline-primary, .btn-outline-secondary, .btn-outline-info');
+            
+            // Cards
+            cards.forEach(card => {
+                if (isDark) {
+                    card.classList.add('bg-dark', 'text-light', 'border-secondary');
+                } else {
+                    card.classList.remove('bg-dark', 'text-light', 'border-secondary');
+                }
+            });
+            
+            // Form controls
+            formControls.forEach(control => {
+                if (isDark) {
+                    control.classList.add('bg-dark', 'text-light', 'border-secondary');
+                } else {
+                    control.classList.remove('bg-dark', 'text-light', 'border-secondary');
+                }
+            });
+            
+            // Buttons with outlines
+            btnOutlines.forEach(btn => {
+                if (isDark) {
+                    btn.style.color = 'var(--primary-color)';
+                    btn.style.borderColor = 'var(--primary-color)';
+                } else {
+                    btn.style.color = '';
+                    btn.style.borderColor = '';
+                }
+            });
+        }
+        
+        // Add observer to watch for dark mode changes
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'data-theme') {
+                    const isDark = htmlElement.getAttribute('data-theme') === 'dark';
+                    updateBootstrapForDarkMode(isDark);
+                }
+            });
+        });
+        
+        observer.observe(htmlElement, { attributes: true });
+        
+        // Initial update based on current theme
+        updateBootstrapForDarkMode(htmlElement.getAttribute('data-theme') === 'dark');
+        
+        // Workers section expand functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const workersDetails = document.getElementById('workersDetails');
+            const expandBtn = document.getElementById('expandWorkersBtn');
+            
+            // Show expand button when content exceeds container height
+            const checkWorkerContentHeight = function() {
+                if (workersDetails && workersDetails.scrollHeight > workersDetails.clientHeight) {
+                    expandBtn.classList.remove('d-none');
+                } else {
+                    expandBtn.classList.add('d-none');
+                }
+            };
+            
+            // Check on worker content updates
+            const observer = new MutationObserver(checkWorkerContentHeight);
+            if (workersDetails) {
+                observer.observe(workersDetails, { childList: true, subtree: true });
+            }
+            
+            // Handle expand button click
+            if (expandBtn) {
+                expandBtn.addEventListener('click', function() {
+                    if (workersDetails.classList.contains('expanded')) {
+                        workersDetails.classList.remove('expanded');
+                        expandBtn.innerHTML = '<i class="bi bi-arrows-angle-expand"></i> Expand';
+                    } else {
+                        workersDetails.classList.add('expanded');
+                        expandBtn.innerHTML = '<i class="bi bi-arrows-angle-contract"></i> Collapse';
+                    }
+                });
+            }
+            
+            // Close expanded view when clicking outside
+            document.addEventListener('click', function(e) {
+                if (workersDetails.classList.contains('expanded') && 
+                    !workersDetails.contains(e.target) && 
+                    e.target !== expandBtn) {
+                    workersDetails.classList.remove('expanded');
+                    expandBtn.innerHTML = '<i class="bi bi-arrows-angle-expand"></i> Expand';
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

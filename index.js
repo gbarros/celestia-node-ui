@@ -1,102 +1,17 @@
 import axios from 'axios';
 import { Buffer } from 'buffer';
-import { Client, RequestManager, WebSocketTransport, JSONRPCError } from '@open-rpc/client-js';
 
-// Configuration for the Celestia node - hardcoded to localhost:26658
-const CELESTIA_NODE_URL = 'ws://localhost:26658';
+// Configuration for the Celestia node
+const CELESTIA_NODE_URL = 'http://localhost:26658';
+const CELESTIA_NODE_AUTH = ''; // No auth as specified in the command (--rpc.skip-auth)
 
-// WebSocket client for RPC
-let wsClient = null;
-
-// Initialize WebSocket client
-async function initWebSocketClient() {
-  try {
-    const transport = new WebSocketTransport(CELESTIA_NODE_URL);
-    
-    // Set up error handler
-    return new Promise((resolve, reject) => {
-      let resolved = false;
-      
-      transport.connection.onopen = () => {
-        const requestManager = new RequestManager([transport]);
-        wsClient = new Client(requestManager);
-        resolved = true;
-        resolve(true);
-      };
-      
-      transport.connection.onerror = (error) => {
-        console.error('WebSocket connection error:', error);
-        if (!resolved) {
-          reject(new Error('Failed to connect to the Celestia node. Ensure your node is running at ' + CELESTIA_NODE_URL));
-        }
-      };
-      
-      // Set a timeout to avoid hanging if the connection never establishes
-      setTimeout(() => {
-        if (!resolved) {
-          transport.connection.close();
-          reject(new Error('Connection timeout. The Celestia node is not responding.'));
-        }
-      }, 5000);
-    });
-  } catch (error) {
-    console.error('Failed to initialize WebSocket client:', error);
-    return false;
+// Initialize the API client
+const apiClient = axios.create({
+  baseURL: CELESTIA_NODE_URL,
+  headers: {
+    'Content-Type': 'application/json',
   }
-}
-
-// Make RPC call using WebSocket
-async function makeRpcCall(method, params = []) {
-  try {
-    // Check if we have a client
-    if (!wsClient) {
-      const initialized = await initWebSocketClient();
-      if (!initialized) {
-        throw new Error('Failed to connect to Celestia node at ' + CELESTIA_NODE_URL);
-      }
-    }
-    
-    // Make request
-    const response = await wsClient.request({ method, params });
-    return response;
-  } catch (error) {
-    if (error instanceof JSONRPCError) {
-      console.error(`RPC Error (${error.code}): ${error.message}`);
-    } else {
-      console.error('RPC call failed:', error);
-    }
-    throw error;
-  }
-}
-
-// Function to test connection and update status indicator
-async function testConnection() {
-  try {
-    // Try to get node address as a simple test
-    await getNodeAddress();
-    return true;
-  } catch (error) {
-    console.error('Connection test failed:', error);
-    return false;
-  }
-}
-
-// Update the connection status indicator
-async function updateConnectionStatus() {
-  const connectionIndicator = document.getElementById('connection-status');
-  
-  if (!connectionIndicator) return;
-  
-  const isConnected = await testConnection();
-  
-  if (isConnected) {
-    connectionIndicator.className = 'badge bg-success';
-    connectionIndicator.textContent = 'Connected';
-  } else {
-    connectionIndicator.className = 'badge bg-danger';
-    connectionIndicator.textContent = 'Disconnected';
-  }
-}
+});
 
 // Random word lists for generating readable namespaces
 const adjectives = [
@@ -127,127 +42,270 @@ const RESERVED_NAMESPACES = {
 // Function to get the node's account address
 async function getNodeAddress() {
   try {
-    const response = await makeRpcCall('state.AccountAddress');
-    return response;
-  } catch (error) {
-    console.error('Failed to get node address:', error);
-    throw error;
-  }
-}
+    const payload = {
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'state.AccountAddress',
+      params: []
+    };
 
-// Function to get the node's balance
-async function getNodeBalance() {
-  try {
-    const response = await makeRpcCall('state.Balance');
-    return response;
+    const response = await apiClient.post('', payload);
+    
+    if (response.data.error) {
+      throw new Error(`API Error: ${response.data.error.message}`);
+    }
+    
+    return response.data.result;
   } catch (error) {
-    console.error('Failed to get node balance:', error);
-    throw error;
+    console.error('Error getting node address:', error);
+    return 'Unable to fetch address. Is your light node running at localhost:26658?';
   }
 }
 
 // Function to get the node's P2P info
-async function getP2PInfo() {
+async function getNodeP2PInfo() {
   try {
-    const response = await makeRpcCall('p2p.Info');
-    return response;
+    const payload = {
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'p2p.Info',
+      params: []
+    };
+
+    const response = await apiClient.post('', payload);
+    
+    if (response.data.error) {
+      console.error('P2P Info API Error:', response.data.error);
+      throw new Error(`API Error: ${response.data.error.message}`);
+    }
+    
+    if (!response.data.result) {
+      console.error('No result in P2P Info response:', response.data);
+      return null;
+    }
+
+    console.log('P2P Info response:', response.data.result);
+    return response.data.result;
   } catch (error) {
-    console.error('Failed to get P2P info:', error);
-    throw error;
+    console.error('Error getting P2P info:', error);
+    return null;
+  }
+}
+
+// Function to get the node's account balance
+async function getNodeBalance() {
+  try {
+    const payload = {
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'state.Balance',
+      params: []
+    };
+
+    const response = await apiClient.post('', payload);
+    
+    if (response.data.error) {
+      console.error('Balance API Error:', response.data.error);
+      throw new Error(`API Error: ${response.data.error.message}`);
+    }
+    
+    if (!response.data.result) {
+      console.error('No result in Balance response:', response.data);
+      return 'Unable to fetch balance. Is your light node running at localhost:26658?';
+    }
+
+    console.log('Balance response:', response.data.result);
+    
+    // Format the balance for display
+    const balance = response.data.result;
+    if (typeof balance === 'object') {
+      // If it's an object with denom and amount properties
+      if (balance.denom && balance.amount !== undefined) {
+        // Convert utia to TIA (1 TIA = 1,000,000 utia)
+        if (balance.denom === 'utia') {
+          const tiaAmount = parseFloat(balance.amount) / 1000000;
+          return `${tiaAmount.toFixed(6)} TIA`;
+        }
+        return `${balance.amount} ${balance.denom}`;
+      }
+      // If it's a different object structure
+      return JSON.stringify(balance);
+    }
+    
+    return response.data.result;
+  } catch (error) {
+    console.error('Error getting balance:', error);
+    return 'Unable to fetch balance. Is your light node running at localhost:26658?';
   }
 }
 
 // Function to get DAS sampling stats
-async function getDasSamplingStats() {
+async function getSamplingStats() {
   try {
-    const response = await makeRpcCall('das.SamplingStats');
-    return response;
-  } catch (error) {
-    console.error('Failed to get DAS sampling stats:', error);
-    return null; // Return null for optional stats
-  }
-}
-
-// Function to submit a blob to the Celestia network
-async function submitBlob(namespace, data, gasPrice = 0.002) {
-  // First check if we're connected
-  const isConnected = await testConnection();
-  if (!isConnected) {
-    throw new Error('Not connected to Celestia node. Please check your connection settings.');
-  }
-
-  try {
-    // Validate inputs
-    if (!isValidBase64(namespace)) {
-      throw new Error('Invalid namespace format. Must be base64 encoded.');
-    }
-
-    const namespaceValidation = validateNamespace(namespace);
-    if (!namespaceValidation.valid) {
-      throw new Error(`Invalid namespace: ${namespaceValidation.error}`);
-    }
-
-    if (!isValidBase64(data)) {
-      throw new Error('Invalid data format. Must be base64 encoded.');
-    }
-
-    // Prepare the blob object
-    const blob = {
-      namespace: namespace,
-      data: data,
-      share_version: 0
+    const payload = {
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'das.SamplingStats',
+      params: []
     };
 
-    // Set gas price option
-    const options = { gas_price: gasPrice };
-
-    // Make the RPC call
-    const response = await makeRpcCall('blob.Submit', [[blob], options]);
-
-    // Convert namespace to hex for display
-    const namespaceHex = base64ToHex(namespace);
-
-    // Return the height and namespace information
-    return {
-      height: response,
-      namespaceHex: namespaceHex,
-      namespaceBase64: namespace
-    };
-  } catch (error) {
-    console.error('Error submitting blob:', error);
-    throw error;
-  }
-}
-
-// Function to retrieve a blob from the Celestia network
-async function getBlob(height, namespace, commitment) {
-  try {
-    const params = [height, namespace];
-    if (commitment) {
-      params.push(commitment);
+    const response = await apiClient.post('', payload);
+    
+    if (response.data.error) {
+      console.error('Sampling Stats API Error:', response.data.error);
+      throw new Error(`API Error: ${response.data.error.message}`);
     }
-    const response = await makeRpcCall('blob.Get', params);
-    return response;
+    
+    if (!response.data.result) {
+      console.error('No result in Sampling Stats response:', response.data);
+      return null;
+    }
+
+    return response.data.result;
   } catch (error) {
-    console.error('Failed to get blob:', error);
-    throw error;
+    console.error('Error getting sampling stats:', error);
+    return null;
   }
 }
 
-// Function to transfer TIA tokens
-async function transferTIA(recipient, amount, gasAmount, gasPrice) {
-  try {
-    const params = [
-      recipient,
-      amount,
-      { gas_limit: gasAmount, gas_price: gasPrice }
-    ];
-    const response = await makeRpcCall('state.Transfer', params);
-    return response;
-  } catch (error) {
-    console.error('Failed to transfer TIA:', error);
-    throw error;
+// Function to setup real-time sampling stats updates using EventSource
+function setupRealtimeSamplingStats() {
+  // Check if browser supports EventSource
+  if (typeof EventSource === 'undefined') {
+    console.warn('EventSource not supported in this browser. Falling back to polling.');
+    return false;
   }
+  
+  // Create a controller that will allow us to abort the fetch request
+  let controller = new AbortController();
+  let signal = controller.signal;
+  
+  // Create variables to handle reconnection attempts
+  let reconnectAttempts = 0;
+  const maxReconnectAttempts = 5;
+  let reconnectTimeout = null;
+  
+  // Find the live button
+  const toggleStreamBtn = document.getElementById('toggleLiveButton');
+  let isStreaming = true; // Start with streaming enabled
+  
+  if (toggleStreamBtn) {
+    toggleStreamBtn.addEventListener('click', () => {
+      if (isStreaming) {
+        // Stop streaming
+        stopStreaming();
+        toggleStreamBtn.classList.remove('btn-success');
+        toggleStreamBtn.classList.add('btn-outline-success');
+        const indicatorDot = toggleStreamBtn.querySelector('.stream-indicator');
+        if (indicatorDot) indicatorDot.classList.remove('streaming');
+        const buttonText = toggleStreamBtn.querySelector('span:not(.stream-indicator)');
+        if (buttonText) buttonText.textContent = 'PAUSED';
+      } else {
+        // Restart streaming with a new controller
+        controller.abort(); // Make sure the old one is aborted
+        controller = new AbortController();
+        signal = controller.signal;
+        startStreaming();
+        toggleStreamBtn.classList.remove('btn-outline-success');
+        toggleStreamBtn.classList.add('btn-success');
+        const indicatorDot = toggleStreamBtn.querySelector('.stream-indicator');
+        if (indicatorDot) indicatorDot.classList.add('streaming');
+        const buttonText = toggleStreamBtn.querySelector('span:not(.stream-indicator)');
+        if (buttonText) buttonText.textContent = 'LIVE';
+      }
+      isStreaming = !isStreaming;
+    });
+  }
+  
+  // Function to start streaming
+  const startStreaming = () => {
+    // Update Live button to show active streaming state
+    if (toggleStreamBtn) {
+      toggleStreamBtn.classList.remove('btn-outline-success');
+      toggleStreamBtn.classList.add('btn-success');
+      const indicatorDot = toggleStreamBtn.querySelector('.stream-indicator');
+      if (indicatorDot) indicatorDot.classList.add('streaming');
+      const buttonText = toggleStreamBtn.querySelector('span:not(.stream-indicator)');
+      if (buttonText) buttonText.textContent = 'LIVE';
+    }
+    
+    // Start fetching sampling stats in a loop to simulate streaming
+    (async function streamStats() {
+      if (signal.aborted) return;
+      
+      try {
+        const stats = await getSamplingStats();
+        if (stats) {
+          updateSamplingStats(stats);
+          reconnectAttempts = 0; // Reset reconnect attempts on success
+          
+          // Schedule the next update after a short delay (200ms for more real-time feel)
+          setTimeout(streamStats, 200);
+        } else {
+          throw new Error('Failed to get sampling stats');
+        }
+      } catch (error) {
+        console.error('Streaming error:', error);
+        
+        // Update Live button to show disconnected state
+        if (toggleStreamBtn) {
+          toggleStreamBtn.classList.remove('btn-success', 'btn-outline-success');
+          toggleStreamBtn.classList.add('btn-outline-danger');
+          const indicatorDot = toggleStreamBtn.querySelector('.stream-indicator');
+          if (indicatorDot) {
+            indicatorDot.classList.remove('streaming');
+            indicatorDot.style.backgroundColor = '#dc3545';
+          }
+          const buttonText = toggleStreamBtn.querySelector('span:not(.stream-indicator)');
+          if (buttonText) buttonText.textContent = 'ERROR';
+        }
+        
+        // Try to reconnect if we haven't exceeded the maximum attempts
+        if (reconnectAttempts < maxReconnectAttempts) {
+          reconnectAttempts++;
+          const delay = Math.min(1000 * reconnectAttempts, 5000); // Exponential backoff up to 5 seconds
+          
+          showToast(`Connection lost. Reconnecting in ${delay/1000}s...`);
+          
+          reconnectTimeout = setTimeout(() => {
+            if (!signal.aborted) {
+              streamStats();
+            }
+          }, delay);
+        } else {
+          showToast('Could not reconnect to the streaming service. Please refresh the page.');
+        }
+      }
+    })();
+    
+    return true;
+  };
+  
+  // Function to stop streaming
+  const stopStreaming = () => {
+    controller.abort();
+    if (reconnectTimeout) {
+      clearTimeout(reconnectTimeout);
+    }
+    
+    // Update Live button to show paused state
+    if (toggleStreamBtn) {
+      toggleStreamBtn.classList.remove('btn-success', 'btn-outline-danger');
+      toggleStreamBtn.classList.add('btn-outline-success');
+      const indicatorDot = toggleStreamBtn.querySelector('.stream-indicator');
+      if (indicatorDot) {
+        indicatorDot.classList.remove('streaming');
+        indicatorDot.style.backgroundColor = '';
+      }
+      const buttonText = toggleStreamBtn.querySelector('span:not(.stream-indicator)');
+      if (buttonText) buttonText.textContent = 'PAUSED';
+    }
+  };
+  
+  // Start streaming immediately
+  startStreaming();
+  
+  return true;
 }
 
 // Function to convert base64 to hex
@@ -401,27 +459,145 @@ function generateRandomNamespace() {
   };
 }
 
-// Function to retrieve a blob by height and namespace
-async function retrieveBlob(heightValue, namespaceHex, commitment = '') {
+// Function to submit a blob to the Celestia network
+async function submitBlob(namespace, data, options = {}) {
   try {
-    console.log(`Retrieving blob from height ${heightValue} with namespace ${namespaceHex}`);
-
-    // Convert hex namespace to base64
-    const namespaceBase64 = hexToBase64(namespaceHex);
-
-    // Prepare parameters
-    const params = [heightValue, namespaceBase64];
-    if (commitment) {
-      params.push(commitment);
+    // Validate inputs
+    if (!isValidBase64(namespace)) {
+      throw new Error('Invalid namespace format. Must be base64 encoded.');
     }
 
-    // Make the RPC call
-    const blobs = await makeRpcCall('blob.Get', params);
-    
-    return blobs;
+    const namespaceValidation = validateNamespace(namespace);
+    if (!namespaceValidation.valid) {
+      throw new Error(`Invalid namespace: ${namespaceValidation.error}`);
+    }
+
+    if (!isValidBase64(data)) {
+      throw new Error('Invalid data format. Must be base64 encoded.');
+    }
+
+    // Prepare the blob object
+    const blob = {
+      namespace: namespace,
+      data: data,
+      share_version: 0
+    };
+
+    // Prepare the request payload
+    const payload = {
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'blob.Submit',
+      params: [
+        [blob], // Array of blobs
+        options
+      ]
+    };
+
+    // Make the request to the Celestia node
+    const response = await apiClient.post('', payload);
+
+    // Check for errors in the response
+    if (response.data.error) {
+      throw new Error(`API Error: ${response.data.error.message}`);
+    }
+
+    // Convert namespace to hex for display
+    const namespaceHex = base64ToHex(namespace);
+
+    // Return the height and namespace information
+    return {
+      height: response.data.result,
+      namespaceHex: namespaceHex,
+      namespaceBase64: namespace
+    };
   } catch (error) {
-    console.error('Error retrieving blob:', error);
+    console.error('Error submitting blob:', error);
     throw error;
+  }
+}
+
+// Function to retrieve a blob by height and namespace
+async function retrieveBlob(height, namespaceHex) {
+  try {
+    // Ensure height is a number
+    const heightValue = parseInt(height, 10);
+    if (isNaN(heightValue)) {
+      throw new Error('Height must be a valid number');
+    }
+    
+    // First we need to convert the hex namespace back to base64
+    // The hex is just the last 10 bytes of the namespace ID, so we need to reconstruct the full namespace
+    
+    // For version 0 namespaces, we need to add a version byte (0) and 18 leading zero bytes
+    const version = 0;
+    const namespaceArray = new Uint8Array(29); // 29 bytes total
+    namespaceArray[0] = version; // Set version byte
+    
+    // Convert hex to bytes
+    const hexBytes = Buffer.from(namespaceHex, 'hex');
+    
+    // Place the hex bytes at the end (after the 18 zero bytes)
+    // The offset is 1 (version byte) + 18 (leading zeros) = 19
+    namespaceArray.set(hexBytes, 19);
+    
+    // Convert to base64 for the API
+    const namespaceBase64 = Buffer.from(namespaceArray).toString('base64');
+    
+    const payload = {
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'blob.GetAll',
+      params: [heightValue, [namespaceBase64]] // Use heightValue (number) instead of height (string)
+    };
+
+    // Simplified logging
+    console.log(`Retrieving blob from height ${heightValue} with namespace ${namespaceBase64}`);
+    
+    const response = await apiClient.post('', payload);
+    
+    if (response.data.error) {
+      console.error('Blob retrieval error:', response.data.error);
+      showToast(`Error: ${response.data.error.message}`);
+      return null;
+    }
+    
+    const result = response.data.result;
+    
+    if (!result) {
+      console.error('No result in API response');
+      return null;
+    }
+    
+    console.log('Blob response:', result);
+    
+    // It might be that the blobs are not in a 'blobs' property
+    // Try to adapt to whatever structure we received
+    let blobs = [];
+    if (Array.isArray(result)) {
+      blobs = result;
+    } else if (result.blobs && Array.isArray(result.blobs)) {
+      blobs = result.blobs;
+    } else if (typeof result === 'object') {
+      for (const key in result) {
+        if (Array.isArray(result[key])) {
+          blobs = result[key];
+          break;
+        }
+      }
+    }
+    
+    if (blobs && blobs.length > 0) {
+      console.log(`Found ${blobs.length} blob(s)`);
+      return blobs[0]; // Return the first blob directly instead of wrapping in object
+    } else {
+      console.error('No blobs found in response');
+      return null;
+    }
+  } catch (error) {
+    console.error('Error retrieving blob:', error.message);
+    showToast(`Error: ${error.message}`);
+    return null;
   }
 }
 
@@ -532,295 +708,310 @@ encodedTextOutput.addEventListener('click', () => {
 });
 
 // Fetch and display node information on page load
-document.addEventListener('DOMContentLoaded', async function () {
-    // Initialize WebSocket connection
-    await initWebSocketClient();
-
-    // Update node information periodically
-    updateNodeInfo();
-    setInterval(updateNodeInfo, 30000); // Update every 30 seconds
-    
-    // Generate a random namespace
-    const randomNamespace = generateRandomNamespace();
-    randomNamespaceInput.value = randomNamespace.base64;
+document.addEventListener('DOMContentLoaded', async () => {
+  // Generate a random namespace
+  const randomNamespace = generateRandomNamespace();
+  randomNamespaceInput.value = randomNamespace.base64;
+  randomNamespaceInput.setAttribute('data-plaintext', randomNamespace.plaintext);
+  randomNamespaceInput.setAttribute('data-hex', randomNamespace.hex);
+  
+  // Display the hex value for the random namespace
+  if (randomNamespaceHex) {
     randomNamespaceHex.textContent = randomNamespace.hex;
-    
-    // Fetch and display node address
-    const address = await getNodeAddress();
-    if (nodeAddressElement) {
-      nodeAddressElement.textContent = address;
-    }
-    
-    // Fetch and display P2P info
-    const p2pInfo = await getP2PInfo();
-    if (nodeP2PInfoElement) {
-      if (p2pInfo && p2pInfo.ID) {
-        nodeP2PInfoElement.textContent = p2pInfo.ID;
-      } else {
-        nodeP2PInfoElement.textContent = 'N/A';
-        console.error('Failed to get P2P info:', p2pInfo);
-      }
-    }
-    
-    // Fetch and display node balance
-    await refreshNodeBalance();
-    
-    // Fetch and display sampling stats
-    const samplingStats = await getDasSamplingStats();
-    if (samplingStats) {
-      updateSamplingStats(samplingStats);
-      
-      // Initialize real-time streaming for sampling stats
-      const isStreamingSupported = setupRealtimeSamplingStats();
-      
-      // Fall back to polling if streaming is not supported
-      if (!isStreamingSupported) {
-        console.log('Falling back to polling for sampling stats');
-        // Set up a refresh interval for sampling stats (every 5 seconds)
-        setInterval(async () => {
-          const updatedStats = await getDasSamplingStats();
-          if (updatedStats) {
-            updateSamplingStats(updatedStats);
-          }
-        }, 5000);
-      }
-      
-      // Add event listener for manual refresh button
-      const refreshButton = document.getElementById('refreshSamplingStats');
-      if (refreshButton) {
-        refreshButton.addEventListener('click', async () => {
-          // Show refresh animation on button
-          refreshButton.classList.add('rotating');
-          
-          // Fetch and update stats
-          const updatedStats = await getDasSamplingStats();
-          if (updatedStats) {
-            updateSamplingStats(updatedStats);
-            showToast('Sampling stats refreshed');
-          } else {
-            showToast('Failed to refresh sampling stats');
-          }
-          
-          // Remove rotation animation
-          setTimeout(() => {
-            refreshButton.classList.remove('rotating');
-          }, 500);
-        });
-      }
+  }
+  
+  // Fetch and display node address
+  const address = await getNodeAddress();
+  if (nodeAddressElement) {
+    nodeAddressElement.textContent = address;
+  }
+  
+  // Fetch and display P2P info
+  const p2pInfo = await getNodeP2PInfo();
+  if (nodeP2PInfoElement) {
+    if (p2pInfo && p2pInfo.ID) {
+      nodeP2PInfoElement.textContent = p2pInfo.ID;
     } else {
-      document.getElementById('samplingStats').textContent = 'Unable to fetch sampling stats. Is your light node running at localhost:26658?';
+      nodeP2PInfoElement.textContent = 'N/A';
+      console.error('Failed to get P2P info:', p2pInfo);
+    }
+  }
+  
+  // Fetch and display node balance
+  await refreshNodeBalance();
+  
+  // Set up periodic balance refresh (every 30 seconds)
+  const nodeBalanceElement = document.getElementById('nodeBalance');
+  setInterval(async () => {
+    const updatedBalance = await getNodeBalance();
+    if (nodeBalanceElement && updatedBalance) {
+      // Only update if the value changed
+      if (nodeBalanceElement.textContent !== updatedBalance) {
+        nodeBalanceElement.textContent = updatedBalance;
+        nodeBalanceElement.classList.remove('value-changed');
+        // Force reflow to restart animation
+        void nodeBalanceElement.offsetWidth;
+        nodeBalanceElement.classList.add('value-changed');
+      }
+    }
+  }, 30000);
+  
+  // Fetch and display sampling stats
+  const samplingStats = await getSamplingStats();
+  if (samplingStats) {
+    updateSamplingStats(samplingStats);
+    
+    // Initialize real-time streaming for sampling stats
+    const isStreamingSupported = setupRealtimeSamplingStats();
+    
+    // Fall back to polling if streaming is not supported
+    if (!isStreamingSupported) {
+      console.log('Falling back to polling for sampling stats');
+      // Set up a refresh interval for sampling stats (every 5 seconds)
+      setInterval(async () => {
+        const updatedStats = await getSamplingStats();
+        if (updatedStats) {
+          updateSamplingStats(updatedStats);
+        }
+      }, 5000);
     }
     
-    // Setup transfer form
-    const transferForm = document.getElementById('transferForm');
-    const transferLoading = document.getElementById('transferLoading');
-    const transferError = document.getElementById('transferError');
-    const transferSuccess = document.getElementById('transferSuccess');
-    
-    if (transferForm) {
-      transferForm.addEventListener('submit', async function(event) {
-        event.preventDefault();
+    // Add event listener for manual refresh button
+    const refreshButton = document.getElementById('refreshSamplingStats');
+    if (refreshButton) {
+      refreshButton.addEventListener('click', async () => {
+        // Show refresh animation on button
+        refreshButton.classList.add('rotating');
         
-        const recipientAddress = document.getElementById('recipientAddress').value.trim();
-        const transferAmount = document.getElementById('transferAmount').value;
-        const gasAdjustment = parseFloat(document.getElementById('gasAdjustment').value) || 1.3;
-        
-        if (!recipientAddress) {
-          transferError.textContent = 'Please enter a valid recipient address';
-          transferError.style.display = 'block';
-          transferSuccess.style.display = 'none';
-          return;
+        // Fetch and update stats
+        const updatedStats = await getSamplingStats();
+        if (updatedStats) {
+          updateSamplingStats(updatedStats);
+          showToast('Sampling stats refreshed');
+        } else {
+          showToast('Failed to refresh sampling stats');
         }
         
-        if (!transferAmount || isNaN(parseFloat(transferAmount)) || parseFloat(transferAmount) <= 0) {
-          transferError.textContent = 'Please enter a valid amount greater than 0';
-          transferError.style.display = 'block';
-          transferSuccess.style.display = 'none';
-          return;
-        }
+        // Remove rotation animation
+        setTimeout(() => {
+          refreshButton.classList.remove('rotating');
+        }, 500);
+      });
+    }
+  } else {
+    document.getElementById('samplingStats').textContent = 'Unable to fetch sampling stats. Is your light node running at localhost:26658?';
+  }
+  
+  // Setup transfer form
+  const transferForm = document.getElementById('transferForm');
+  const transferLoading = document.getElementById('transferLoading');
+  const transferError = document.getElementById('transferError');
+  const transferSuccess = document.getElementById('transferSuccess');
+  
+  if (transferForm) {
+    transferForm.addEventListener('submit', async function(event) {
+      event.preventDefault();
+      
+      const recipientAddress = document.getElementById('recipientAddress').value.trim();
+      const transferAmount = document.getElementById('transferAmount').value;
+      const gasAdjustment = parseFloat(document.getElementById('gasAdjustment').value) || 1.3;
+      
+      if (!recipientAddress) {
+        transferError.textContent = 'Please enter a valid recipient address';
+        transferError.style.display = 'block';
+        transferSuccess.style.display = 'none';
+        return;
+      }
+      
+      if (!transferAmount || isNaN(parseFloat(transferAmount)) || parseFloat(transferAmount) <= 0) {
+        transferError.textContent = 'Please enter a valid amount greater than 0';
+        transferError.style.display = 'block';
+        transferSuccess.style.display = 'none';
+        return;
+      }
+      
+      try {
+        transferError.style.display = 'none';
+        transferSuccess.style.display = 'none';
+        transferLoading.style.display = 'block';
         
-        try {
-          transferError.style.display = 'none';
-          transferSuccess.style.display = 'none';
-          transferLoading.style.display = 'block';
+        const txResult = await transferTIA(recipientAddress, transferAmount, gasAdjustment);
+        
+        // Show success message with transaction details
+        if (txResult && txResult.txhash) {
+          const transferTxHash = document.getElementById('transferTxHash');
+          const transferExplorerLink = document.getElementById('transferExplorerLink');
           
-          const txResult = await transferTIA(recipientAddress, transferAmount, gasAdjustment);
-          
-          // Show success message with transaction details
-          if (txResult && txResult.txhash) {
-            const transferTxHash = document.getElementById('transferTxHash');
-            const transferExplorerLink = document.getElementById('transferExplorerLink');
-            
-            if (transferTxHash) {
-              transferTxHash.textContent = txResult.txhash;
-            }
-            
-            if (transferExplorerLink) {
-              const explorerUrl = `https://mocha.celenium.io/tx/${txResult.txhash}`;
-              transferExplorerLink.href = explorerUrl;
-            }
+          if (transferTxHash) {
+            transferTxHash.textContent = txResult.txhash;
           }
           
-          transferSuccess.style.display = 'block';
-          
-          // Reset form
-          transferForm.reset();
-          
-          // Set default gas adjustment value after reset
-          document.getElementById('gasAdjustment').value = "1.3";
-          
-          // Refresh node balance after successful transfer
-          await refreshNodeBalance();
-          
-          // Show toast notification
-          showToast('Transfer completed successfully!');
-        } catch (error) {
-          // Show error message
-          transferError.textContent = `Transfer failed: ${error.message || 'Unknown error'}`;
-          transferError.style.display = 'block';
-        } finally {
-          transferLoading.style.display = 'none';
+          if (transferExplorerLink) {
+            const explorerUrl = `https://mocha.celenium.io/tx/${txResult.txhash}`;
+            transferExplorerLink.href = explorerUrl;
+          }
         }
-      });
-    }
-    
-    // Setup tab navigation
-    setupTabNavigation();
-    
-    // Handle tab click for database tab
-    const databaseTab = document.getElementById('database-tab');
-    if (databaseTab) {
-      databaseTab.addEventListener('shown.bs.tab', () => {
-        // Refresh database info when tab is shown
+        
+        transferSuccess.style.display = 'block';
+        
+        // Reset form
+        transferForm.reset();
+        
+        // Set default gas adjustment value after reset
+        document.getElementById('gasAdjustment').value = "1.3";
+        
+        // Refresh node balance after successful transfer
+        await refreshNodeBalance();
+        
+        // Show toast notification
+        showToast('Transfer completed successfully!');
+      } catch (error) {
+        // Show error message
+        transferError.textContent = `Transfer failed: ${error.message || 'Unknown error'}`;
+        transferError.style.display = 'block';
+      } finally {
+        transferLoading.style.display = 'none';
+      }
+    });
+  }
+  
+  // Setup tab navigation
+  setupTabNavigation();
+  
+  // Handle tab click for database tab
+  const databaseTab = document.getElementById('database-tab');
+  if (databaseTab) {
+    databaseTab.addEventListener('shown.bs.tab', () => {
+      // Refresh database info when tab is shown
+      updateDatabaseInfoPanel();
+      displayDatabaseRecords();
+      displayDatabaseSchema();
+    });
+  }
+  
+  // Setup database clear cache functionality
+  const clearDbCacheBtn = document.getElementById('clearDbCacheBtn');
+  if (clearDbCacheBtn) {
+    clearDbCacheBtn.addEventListener('click', () => {
+      // Ask for confirmation before clearing cache
+      if (confirm('Are you sure you want to clear the database cache? This will remove all local database information and your encryption token, effectively making any future data inaccessible with a different key.')) {
+        clearDatabaseCache();
+        showToast('Database cache and encryption token cleared. Any future database will use a new encryption key.', 'success');
+      }
+    });
+  }
+  
+  // Setup database namespace generator
+  const generateDbNamespaceBtn = document.getElementById('generateDbNamespaceBtn');
+  if (generateDbNamespaceBtn) {
+    generateDbNamespaceBtn.addEventListener('click', () => {
+      const randomNamespace = generateRandomNamespace();
+      const dbNamespaceInput = document.getElementById('dbNamespace');
+      const dbNamespaceHex = document.getElementById('dbNamespaceHex');
+      
+      if (dbNamespaceInput) {
+        dbNamespaceInput.value = randomNamespace.base64;
+      }
+      
+      if (dbNamespaceHex) {
+        dbNamespaceHex.textContent = randomNamespace.hex;
+      }
+    });
+  }
+  
+  // Setup database initialization form
+  const initDbForm = document.getElementById('initDbForm');
+  if (initDbForm) {
+    initDbForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const namespace = document.getElementById('dbNamespace').value;
+      const schema = document.getElementById('dbSchema').value;
+      
+      // Show loading
+      document.getElementById('initDbLoading').style.display = 'block';
+      document.getElementById('initDbSuccess').style.display = 'none';
+      document.getElementById('initDbError').style.display = 'none';
+      
+      try {
+        const result = await initializeDatabase(namespace, schema);
+        
+        // Show success
+        document.getElementById('initDbSuccess').style.display = 'block';
+        document.getElementById('initDbNamespace').textContent = namespace;
+        document.getElementById('initDbHeight').textContent = result.schemaHeight;
+        
+        // Update the database info panel
         updateDatabaseInfoPanel();
-        displayDatabaseRecords();
+        
+        // Display the schema
         displayDatabaseSchema();
-      });
-    }
-    
-    // Setup database clear cache functionality
-    const clearDbCacheBtn = document.getElementById('clearDbCacheBtn');
-    if (clearDbCacheBtn) {
-      clearDbCacheBtn.addEventListener('click', () => {
-        // Ask for confirmation before clearing cache
-        if (confirm('Are you sure you want to clear the database cache? This will remove all local database information and your encryption token, effectively making any future data inaccessible with a different key.')) {
-          clearDatabaseCache();
-          showToast('Database cache and encryption token cleared. Any future database will use a new encryption key.', 'success');
-        }
-      });
-    }
-    
-    // Setup database namespace generator
-    const generateDbNamespaceBtn = document.getElementById('generateDbNamespaceBtn');
-    if (generateDbNamespaceBtn) {
-      generateDbNamespaceBtn.addEventListener('click', () => {
-        const randomNamespace = generateRandomNamespace();
-        const dbNamespaceInput = document.getElementById('dbNamespace');
-        const dbNamespaceHex = document.getElementById('dbNamespaceHex');
         
-        if (dbNamespaceInput) {
-          dbNamespaceInput.value = randomNamespace.base64;
-        }
+        // Clear form
+        document.getElementById('dbSchema').value = '';
+      } catch (error) {
+        // Show error
+        document.getElementById('initDbError').style.display = 'block';
+        document.getElementById('initDbError').textContent = `Error: ${error.message}`;
+      } finally {
+        document.getElementById('initDbLoading').style.display = 'none';
+      }
+    });
+  }
+  
+  // Setup add record form
+  const addRecordForm = document.getElementById('addRecordForm');
+  if (addRecordForm) {
+    addRecordForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const data = document.getElementById('recordData').value;
+      
+      // Show loading
+      document.getElementById('addRecordLoading').style.display = 'block';
+      document.getElementById('addRecordError').style.display = 'none';
+      
+      try {
+        await addDatabaseRecord(data);
         
-        if (dbNamespaceHex) {
-          dbNamespaceHex.textContent = randomNamespace.hex;
-        }
-      });
-    }
-    
-    // Setup database initialization form
-    const initDbForm = document.getElementById('initDbForm');
-    if (initDbForm) {
-      initDbForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const namespace = document.getElementById('dbNamespace').value;
-        const schema = document.getElementById('dbSchema').value;
-        
-        // Show loading
-        document.getElementById('initDbLoading').style.display = 'block';
-        document.getElementById('initDbSuccess').style.display = 'none';
-        document.getElementById('initDbError').style.display = 'none';
-        
-        try {
-          const result = await initializeDatabase(namespace, schema);
-          
-          // Show success
-          document.getElementById('initDbSuccess').style.display = 'block';
-          document.getElementById('initDbNamespace').textContent = namespace;
-          document.getElementById('initDbHeight').textContent = result.schemaHeight;
-          
-          // Update the database info panel
-          updateDatabaseInfoPanel();
-          
-          // Display the schema
-          displayDatabaseSchema();
-          
-          // Clear form
-          document.getElementById('dbSchema').value = '';
-        } catch (error) {
-          // Show error
-          document.getElementById('initDbError').style.display = 'block';
-          document.getElementById('initDbError').textContent = `Error: ${error.message}`;
-        } finally {
-          document.getElementById('initDbLoading').style.display = 'none';
-        }
-      });
-    }
-    
-    // Setup add record form
-    const addRecordForm = document.getElementById('addRecordForm');
-    if (addRecordForm) {
-      addRecordForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const data = document.getElementById('recordData').value;
-        
-        // Show loading
-        document.getElementById('addRecordLoading').style.display = 'block';
-        document.getElementById('addRecordError').style.display = 'none';
-        
-        try {
-          await addDatabaseRecord(data);
-          
-          // Update the database info panel and records table
-          updateDatabaseInfoPanel();
-          await displayDatabaseRecords();
-          
-          // Clear form
-          document.getElementById('recordData').value = '';
-          
-          // Show toast
-          showToast('Record added successfully!');
-        } catch (error) {
-          // Show error
-          document.getElementById('addRecordError').style.display = 'block';
-          document.getElementById('addRecordError').textContent = `Error: ${error.message}`;
-        } finally {
-          document.getElementById('addRecordLoading').style.display = 'none';
-        }
-      });
-    }
-    
-    // Refresh button
-    const refreshDbBtn = document.getElementById('refreshDbBtn');
-    if (refreshDbBtn) {
-      refreshDbBtn.addEventListener('click', async () => {
+        // Update the database info panel and records table
         updateDatabaseInfoPanel();
         await displayDatabaseRecords();
         
-        // Add rotation animation to button
-        refreshDbBtn.classList.add('rotating');
-        setTimeout(() => {
-          refreshDbBtn.classList.remove('rotating');
-        }, 500);
+        // Clear form
+        document.getElementById('recordData').value = '';
         
-        showToast('Database refreshed!');
-      });
-    }
-    
-    // Initialize the database UI on page load
-    updateDatabaseInfoPanel();
+        // Show toast
+        showToast('Record added successfully!');
+      } catch (error) {
+        // Show error
+        document.getElementById('addRecordError').style.display = 'block';
+        document.getElementById('addRecordError').textContent = `Error: ${error.message}`;
+      } finally {
+        document.getElementById('addRecordLoading').style.display = 'none';
+      }
+    });
+  }
+  
+  // Refresh button
+  const refreshDbBtn = document.getElementById('refreshDbBtn');
+  if (refreshDbBtn) {
+    refreshDbBtn.addEventListener('click', async () => {
+      updateDatabaseInfoPanel();
+      await displayDatabaseRecords();
+      
+      // Add rotation animation to button
+      refreshDbBtn.classList.add('rotating');
+      setTimeout(() => {
+        refreshDbBtn.classList.remove('rotating');
+      }, 500);
+      
+      showToast('Database refreshed!');
+    });
+  }
+  
+  // Initialize the database UI on page load
+  updateDatabaseInfoPanel();
 });
 
 // Function to set up tab navigation
@@ -1207,12 +1398,6 @@ blobForm.addEventListener('submit', async (event) => {
   loadingElement.style.display = 'block';
   
   try {
-    // First check connection status
-    const isConnected = await testConnection();
-    if (!isConnected) {
-      throw new Error('Not connected to Celestia node. Please check your connection settings and ensure your node is running.');
-    }
-    
     // Get the selected namespace type
     const selectedType = document.querySelector('input[name="namespaceType"]:checked').value;
     
@@ -1252,20 +1437,22 @@ blobForm.addEventListener('submit', async (event) => {
     const data = dataInput.value.trim();
     const gasPrice = gasPriceInput.value ? parseFloat(gasPriceInput.value) : 0.002;
     
+    // Prepare options
+    const options = {
+      gas_price: gasPrice,
+      is_gas_price_set: true
+    };
+    
     // Submit the blob
-    const result = await submitBlob(namespace, data, gasPrice);
+    const result = await submitBlob(namespace, data, options);
     
     // Show success result
     updateResultContainer(result);
     
   } catch (error) {
     // Display error message
-    console.error('Error submitting blob:', error);
     errorMessageElement.textContent = error.message || 'An error occurred while submitting the blob.';
     errorMessageElement.style.display = 'block';
-    
-    // Also show as toast for visibility
-    showToast(`Error: ${error.message || 'Failed to submit blob'}`, 'error');
   } finally {
     // Hide loading indicator
     loadingElement.style.display = 'none';
@@ -1430,26 +1617,10 @@ if (document.getElementById('copyCurlCommand')) {
 }
 
 // Helper function to show toast notification
-function showToast(message, type = 'info') {
-  // Find or create toast container
-  let toastContainer = document.getElementById('toastContainer');
-  if (!toastContainer) {
-    toastContainer = document.createElement('div');
-    toastContainer.id = 'toastContainer';
-    toastContainer.className = 'toast-container';
-    document.body.appendChild(toastContainer);
-  }
-  
+function showToast(message) {
+  const toastContainer = document.getElementById('toastContainer');
   const toast = document.createElement('div');
   toast.className = 'toast';
-  
-  // Add type-specific class
-  if (type === 'error') {
-    toast.classList.add('error');
-  } else if (type === 'success') {
-    toast.classList.add('success');
-  }
-  
   toast.textContent = message;
   toastContainer.appendChild(toast);
   
@@ -1457,15 +1628,13 @@ function showToast(message, type = 'info') {
   toast.offsetHeight;
   toast.classList.add('show');
   
-  // Remove toast after 3 seconds
+  // Remove toast after 2 seconds
   setTimeout(() => {
     toast.classList.remove('show');
     setTimeout(() => {
-      if (toastContainer.contains(toast)) {
-        toastContainer.removeChild(toast);
-      }
+      toastContainer.removeChild(toast);
     }, 300);
-  }, 3000);
+  }, 2000);
 }
 
 // Helper function to copy text to clipboard
@@ -1515,14 +1684,14 @@ async function transferTIA(recipientAddress, amountInTIA, gasAdjustment = 1.3) {
     };
 
     console.log('Transfer payload:', payload);
-    const response = await makeRpcCall('state.Transfer', payload);
+    const response = await apiClient.post('', payload);
     
-    if (response.error) {
-      throw new Error(`RPC Error: ${response.error.message}`);
+    if (response.data.error) {
+      throw new Error(`API Error: ${response.data.error.message}`);
     }
     
-    console.log('Transfer response:', response);
-    return response.result;
+    console.log('Transfer response:', response.data);
+    return response.data.result;
   } catch (error) {
     console.error('Error transferring TIA:', error);
     throw error;

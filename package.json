@@ -7,14 +7,12 @@
     "build": "parcel build index.html"
   },
   "dependencies": {
-    "@open-rpc/client-js": "^1.8.1",
-    "axios": "^1.4.0",
-    "buffer": "^6.0.3"
+    "axios": "^1.6.2"
   },
   "devDependencies": {
-    "events": "^3.3.0",
+    "buffer": "^6.0.3",
     "parcel": "^2.9.3",
     "process": "^0.11.10",
     "svgo": "^3.0.2"
   }
-}
+} 

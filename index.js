@@ -1168,6 +1168,9 @@ function updateSamplingStats(stats) {
   const existingTbody = existingTable ? existingTable.querySelector('tbody') : null;
   
   if (stats.workers && stats.workers.length > 0) {
+    // Remove the no-active-workers class if it exists
+    workersDetails.classList.remove('no-active-workers');
+    
     // Create or reuse the table
     let table, tbody;
     
@@ -1260,6 +1263,7 @@ function updateSamplingStats(stats) {
     }
   } else {
     workersDetails.textContent = 'No active workers';
+    workersDetails.classList.add('no-active-workers');
   }
   
   // Update overall status

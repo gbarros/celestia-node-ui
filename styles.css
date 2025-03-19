@@ -920,7 +920,7 @@ strong, b, .font-weight-bold, .fw-bold {
 
 /* No active workers message */
 #workersDetails:empty::after,
-#workersDetails:contains("No active workers") {
+.no-active-workers {
   background-color: rgba(0, 0, 0, 0.03);
   border-radius: 4px;
   padding: 10px;

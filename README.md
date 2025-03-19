@@ -41,6 +41,8 @@ yarn start
 The application displays information about your Celestia node:
 - **Node Address**: The account address of your Celestia node
 - **P2P ID**: The peer-to-peer identifier of your node
+- **Account Balance**: The current balance of your node in TIA
+- **DAS Sampling Stats**: Real-time data availability sampling statistics
 
 ### Celestia Namespace Format
 
@@ -75,6 +77,33 @@ The application handles this format automatically for you when using the plainte
    - The namespace in hex format (as shown in Celestia Explorer)
    - The commitment (hash) of your blob, which can be used to verify or retrieve the blob later
 
+### Data Encryption
+
+The application provides data encryption functionality:
+
+1. Data is encrypted based on your browser session
+2. A unique encryption key is generated for your session
+3. All data is encrypted before being submitted to the Celestia network
+4. Only users with the same session key can decrypt the data
+5. This provides an additional layer of privacy for your blob data
+
+### Retrieving a Blob
+
+1. Enter the block height where the blob was included
+2. Enter the namespace in hex format
+3. Click "Retrieve Blob"
+4. The application will display the retrieved blob data in base64 format
+5. If the blob was encrypted during submission, it will be automatically decrypted if you have the correct session key
+
+### Transfer TIA
+
+The application allows you to transfer TIA tokens from your node to another address:
+
+1. Enter the recipient's Celestia address
+2. Enter the amount to send in TIA
+3. (Optional) Adjust the gas parameters
+4. Click "Transfer"
+
 ### Base64 Encoding Tool
 
 The application includes a simple tool to encode text to base64:
@@ -86,11 +115,18 @@ The application includes a simple tool to encode text to base64:
 
 ## API Details
 
-This application uses the Celestia Node API to submit blobs to the network. The main endpoints used are:
+This application uses the Celestia Node API to interact with the network. The main endpoints used are:
 
 - `blob.Submit`: Submits a blob to the Celestia network
+- `blob.Get`: Retrieves a blob from the network
 - `state.AccountAddress`: Retrieves the node's account address
+- `state.Balance`: Retrieves the node's account balance
 - `p2p.Info`: Retrieves the node's P2P information
+- `das.SamplingStats`: Retrieves data availability sampling statistics
+
+## Live Streaming
+
+The application supports real-time streaming of DAS sampling statistics, giving you up-to-date information about your node's sampling performance.
 
 ## Troubleshooting
 

@@ -12,6 +12,7 @@
   "devDependencies": {
     "buffer": "^6.0.3",
     "parcel": "^2.9.3",
-    "process": "^0.11.10"
+    "process": "^0.11.10",
+    "svgo": "^3.0.2"
   }
 } 

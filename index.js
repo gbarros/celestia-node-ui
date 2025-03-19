@@ -1015,6 +1015,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       const namespace = document.getElementById('dbNamespace').value;
       const schema = document.getElementById('dbSchema').value;
       
+      // Check if a database is already initialized
+      const existingNamespace = localStorage.getItem(DB_NAMESPACE_KEY);
+      const existingSchemaHeight = localStorage.getItem(DB_SCHEMA_HEIGHT_KEY);
+      
+      // If a database is already initialized, show a confirmation dialog
+      if (existingNamespace && existingSchemaHeight) {
+        if (!confirm('You already have an initialized database. Initializing a new one will overwrite your local database information and use a new encryption key. This means you will no longer be able to access your existing database with this browser. Are you sure you want to continue?')) {
+          return; // User canceled, don't proceed
+        }
+      }
+      
       // Show loading
       document.getElementById('initDbLoading').style.display = 'block';
       document.getElementById('initDbSuccess').style.display = 'none';
@@ -1027,6 +1038,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('initDbSuccess').style.display = 'block';
         document.getElementById('initDbNamespace').textContent = namespace;
         document.getElementById('initDbHeight').textContent = result.schemaHeight;
+        
+        // Update the namespace explorer link
+        const namespaceHex = base64ToHex(namespace);
+        const initDbNamespaceLink = document.getElementById('initDbNamespaceLink');
+        if (initDbNamespaceLink) {
+          initDbNamespaceLink.href = `https://mocha.celenium.io/namespace/000000000000000000000000000000000000${namespaceHex}?tab=Blobs`;
+        }
         
         // Update the database info panel
         updateDatabaseInfoPanel();
@@ -2317,11 +2335,19 @@ function updateDatabaseInfoPanel() {
     const dbInfoStatus = document.getElementById('dbInfoStatus');
     const dbRecordCount = document.getElementById('dbRecordCount');
     const dbEncryptionStatus = document.getElementById('dbEncryptionStatus');
+    const dbInfoNamespaceLink = document.getElementById('dbInfoNamespaceLink');
     
     if (namespace && schemaHeight) {
         // Database is initialized
         dbInfoNamespace.textContent = namespace;
         dbInfoSchemaHeight.textContent = schemaHeight;
+        
+        // Update namespace link
+        if (dbInfoNamespaceLink) {
+            const namespaceHex = base64ToHex(namespace);
+            dbInfoNamespaceLink.href = `https://mocha.celenium.io/namespace/000000000000000000000000000000000000${namespaceHex}?tab=Blobs`;
+            dbInfoNamespaceLink.style.display = 'inline-block';
+        }
         
         if (recordsList.length > 0) {
             // Get the most recent record timestamp
@@ -2363,6 +2389,11 @@ function updateDatabaseInfoPanel() {
         dbInfoStatus.textContent = 'Not Initialized';
         dbInfoStatus.className = 'badge bg-secondary';
         dbRecordCount.textContent = '0 Records';
+        
+        // Hide namespace link
+        if (dbInfoNamespaceLink) {
+            dbInfoNamespaceLink.style.display = 'none';
+        }
         
         // Update encryption status
         dbEncryptionStatus.textContent = 'Not Encrypted';

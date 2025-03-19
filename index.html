@@ -813,6 +813,7 @@
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <a href="https://celestiaorg.github.io/celestia-app/namespace.html" target="_blank">Read official Celestia namespace documentation</a>
                             </div>
                         </div>
                     </div>
@@ -1148,7 +1149,8 @@
                                 <strong>Database initialized successfully!</strong>
                                 <p class="mb-0">Your database has been created with the specified schema.</p>
                                 <p class="mt-2 mb-0"><strong>Namespace:</strong> <span id="initDbNamespace"></span></p>
-                                <p class="mt-1"><strong>Height:</strong> <span id="initDbHeight"></span></p>
+                                <p class="mt-1 mb-1"><strong>Height:</strong> <span id="initDbHeight"></span></p>
+                                <p class="mt-1"><a href="#" id="initDbNamespaceLink" target="_blank" class="btn btn-sm btn-outline-primary"><i class="bi bi-box-arrow-up-right"></i> View on Celenium Explorer</a></p>
                             </div>
                             
                             <!-- Error message for database initialization -->
@@ -1213,6 +1215,7 @@
                                         <div class="col-md-6">
                                             <p class="mb-1"><strong>Namespace:</strong> <span id="dbInfoNamespace">Not set</span></p>
                                             <p class="mb-1"><strong>Schema Height:</strong> <span id="dbInfoSchemaHeight">Not set</span></p>
+                                            <p class="mb-1"><a href="#" id="dbInfoNamespaceLink" target="_blank" class="btn btn-sm btn-outline-primary" style="display: none;"><i class="bi bi-box-arrow-up-right"></i> View on Celenium Explorer</a></p>
                                         </div>
                                         <div class="col-md-6">
                                             <p class="mb-1"><strong>Last Updated:</strong> <span id="dbInfoLastUpdated">Never</span></p>

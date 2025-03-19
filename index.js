@@ -2,12 +2,141 @@ import axios from 'axios';
 import { Buffer } from 'buffer';
 
 // Configuration for the Celestia node
-const CELESTIA_NODE_URL = 'http://localhost:26658';
+const CELESTIA_NODE_URL = 'ws://localhost:26658';
 const CELESTIA_NODE_AUTH = ''; // No auth as specified in the command (--rpc.skip-auth)
 
-// Initialize the API client
+// Initialize WebSocket connection
+let ws = null;
+let requestId = 1;
+let pendingRequests = {};
+let isConnected = false;
+let reconnectAttempts = 0;
+const maxReconnectAttempts = 5;
+
+function connectWebSocket() {
+  if (ws !== null) {
+    return; // Already connected or connecting
+  }
+  
+  try {
+    // Using the browser's native WebSocket API
+    ws = new WebSocket(CELESTIA_NODE_URL);
+    
+    ws.onopen = () => {
+      console.log('WebSocket connection established');
+      isConnected = true;
+      reconnectAttempts = 0;
+      
+      // Notify UI that connection is established
+      const connectionStatus = document.getElementById('connectionStatus');
+      if (connectionStatus) {
+        connectionStatus.classList.remove('text-danger', 'text-warning');
+        connectionStatus.classList.add('text-success');
+        connectionStatus.textContent = 'Connected to Celestia node via WebSocket';
+      }
+    };
+    
+    ws.onmessage = (event) => {
+      try {
+        const response = JSON.parse(event.data);
+        
+        // If this is a response to a pending request
+        if (response.id && pendingRequests[response.id]) {
+          const { resolve, reject } = pendingRequests[response.id];
+          
+          if (response.error) {
+            reject(new Error(response.error.message || 'Unknown error'));
+          } else {
+            resolve(response);
+          }
+          
+          // Clean up the pending request
+          delete pendingRequests[response.id];
+        } else {
+          // Handle subscription messages or other unexpected messages
+          console.log('Received message:', response);
+        }
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
+      }
+    };
+    
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      isConnected = false;
+    };
+    
+    ws.onclose = () => {
+      console.log('WebSocket connection closed');
+      isConnected = false;
+      ws = null;
+      
+      // Attempt to reconnect
+      if (reconnectAttempts < maxReconnectAttempts) {
+        reconnectAttempts++;
+        const delay = Math.min(1000 * reconnectAttempts, 5000);
+        console.log(`Attempting to reconnect in ${delay}ms...`);
+        
+        setTimeout(connectWebSocket, delay);
+      } else {
+        console.error('Failed to reconnect after multiple attempts');
+        
+        // Update UI to show disconnected state
+        const connectionStatus = document.getElementById('connectionStatus');
+        if (connectionStatus) {
+          connectionStatus.classList.remove('text-success');
+          connectionStatus.classList.add('text-danger');
+          connectionStatus.textContent = 'Disconnected from Celestia node';
+        }
+      }
+    };
+  } catch (error) {
+    console.error('Error connecting to WebSocket:', error);
+    ws = null;
+  }
+}
+
+// Connect to WebSocket when the page loads
+window.addEventListener('DOMContentLoaded', connectWebSocket);
+
+// Function to send RPC requests over WebSocket
+async function sendRpcRequest(method, params = []) {
+  if (!isConnected) {
+    await new Promise((resolve) => {
+      const checkConnection = () => {
+        if (isConnected) {
+          resolve();
+        } else {
+          connectWebSocket();
+          setTimeout(checkConnection, 500);
+        }
+      };
+      checkConnection();
+    });
+  }
+  
+  const id = requestId++;
+  const payload = {
+    jsonrpc: '2.0',
+    id,
+    method,
+    params
+  };
+  
+  return new Promise((resolve, reject) => {
+    try {
+      pendingRequests[id] = { resolve, reject };
+      ws.send(JSON.stringify(payload));
+    } catch (error) {
+      delete pendingRequests[id];
+      reject(error);
+    }
+  });
+}
+
+// Keep a reference to the axios client for any HTTP requests that might still be needed
 const apiClient = axios.create({
-  baseURL: CELESTIA_NODE_URL,
+  baseURL: CELESTIA_NODE_URL.replace('ws://', 'http://'),
   headers: {
     'Content-Type': 'application/json',
   }
@@ -42,20 +171,13 @@ const RESERVED_NAMESPACES = {
 // Function to get the node's account address
 async function getNodeAddress() {
   try {
-    const payload = {
-      jsonrpc: '2.0',
-      id: 1,
-      method: 'state.AccountAddress',
-      params: []
-    };
-
-    const response = await apiClient.post('', payload);
+    const response = await sendRpcRequest('state.AccountAddress');
     
-    if (response.data.error) {
-      throw new Error(`API Error: ${response.data.error.message}`);
+    if (response.error) {
+      throw new Error(`API Error: ${response.error.message}`);
     }
     
-    return response.data.result;
+    return response.result;
   } catch (error) {
     console.error('Error getting node address:', error);
     return 'Unable to fetch address. Is your light node running at localhost:26658?';
@@ -65,27 +187,20 @@ async function getNodeAddress() {
 // Function to get the node's P2P info
 async function getNodeP2PInfo() {
   try {
-    const payload = {
-      jsonrpc: '2.0',
-      id: 1,
-      method: 'p2p.Info',
-      params: []
-    };
-
-    const response = await apiClient.post('', payload);
+    const response = await sendRpcRequest('p2p.Info');
     
-    if (response.data.error) {
-      console.error('P2P Info API Error:', response.data.error);
-      throw new Error(`API Error: ${response.data.error.message}`);
+    if (response.error) {
+      console.error('P2P Info API Error:', response.error);
+      throw new Error(`API Error: ${response.error.message}`);
     }
     
-    if (!response.data.result) {
-      console.error('No result in P2P Info response:', response.data);
+    if (!response.result) {
+      console.error('No result in P2P Info response:', response);
       return null;
     }
 
-    console.log('P2P Info response:', response.data.result);
-    return response.data.result;
+    console.log('P2P Info response:', response.result);
+    return response.result;
   } catch (error) {
     console.error('Error getting P2P info:', error);
     return null;
@@ -95,29 +210,22 @@ async function getNodeP2PInfo() {
 // Function to get the node's account balance
 async function getNodeBalance() {
   try {
-    const payload = {
-      jsonrpc: '2.0',
-      id: 1,
-      method: 'state.Balance',
-      params: []
-    };
-
-    const response = await apiClient.post('', payload);
+    const response = await sendRpcRequest('state.Balance');
     
-    if (response.data.error) {
-      console.error('Balance API Error:', response.data.error);
-      throw new Error(`API Error: ${response.data.error.message}`);
+    if (response.error) {
+      console.error('Balance API Error:', response.error);
+      throw new Error(`API Error: ${response.error.message}`);
     }
     
-    if (!response.data.result) {
-      console.error('No result in Balance response:', response.data);
+    if (!response.result) {
+      console.error('No result in Balance response:', response);
       return 'Unable to fetch balance. Is your light node running at localhost:26658?';
     }
 
-    console.log('Balance response:', response.data.result);
+    console.log('Balance response:', response.result);
     
     // Format the balance for display
-    const balance = response.data.result;
+    const balance = response.result;
     if (typeof balance === 'object') {
       // If it's an object with denom and amount properties
       if (balance.denom && balance.amount !== undefined) {
@@ -132,7 +240,7 @@ async function getNodeBalance() {
       return JSON.stringify(balance);
     }
     
-    return response.data.result;
+    return response.result;
   } catch (error) {
     console.error('Error getting balance:', error);
     return 'Unable to fetch balance. Is your light node running at localhost:26658?';
@@ -142,26 +250,19 @@ async function getNodeBalance() {
 // Function to get DAS sampling stats
 async function getSamplingStats() {
   try {
-    const payload = {
-      jsonrpc: '2.0',
-      id: 1,
-      method: 'das.SamplingStats',
-      params: []
-    };
-
-    const response = await apiClient.post('', payload);
+    const response = await sendRpcRequest('das.SamplingStats');
     
-    if (response.data.error) {
-      console.error('Sampling Stats API Error:', response.data.error);
-      throw new Error(`API Error: ${response.data.error.message}`);
+    if (response.error) {
+      console.error('Sampling Stats API Error:', response.error);
+      throw new Error(`API Error: ${response.error.message}`);
     }
     
-    if (!response.data.result) {
-      console.error('No result in Sampling Stats response:', response.data);
+    if (!response.result) {
+      console.error('No result in Sampling Stats response:', response);
       return null;
     }
 
-    return response.data.result;
+    return response.result;
   } catch (error) {
     console.error('Error getting sampling stats:', error);
     return null;
@@ -483,23 +584,15 @@ async function submitBlob(namespace, data, options = {}) {
       share_version: 0
     };
 
-    // Prepare the request payload
-    const payload = {
-      jsonrpc: '2.0',
-      id: 1,
-      method: 'blob.Submit',
-      params: [
-        [blob], // Array of blobs
-        options
-      ]
-    };
-
-    // Make the request to the Celestia node
-    const response = await apiClient.post('', payload);
+    // Send request via WebSocket
+    const response = await sendRpcRequest('blob.Submit', [
+      [blob], // Array of blobs
+      options
+    ]);
 
     // Check for errors in the response
-    if (response.data.error) {
-      throw new Error(`API Error: ${response.data.error.message}`);
+    if (response.error) {
+      throw new Error(`API Error: ${response.error.message}`);
     }
 
     // Convert namespace to hex for display
@@ -507,7 +600,7 @@ async function submitBlob(namespace, data, options = {}) {
 
     // Return the height and namespace information
     return {
-      height: response.data.result,
+      height: response.result,
       namespaceHex: namespaceHex,
       namespaceBase64: namespace
     };
@@ -520,10 +613,10 @@ async function submitBlob(namespace, data, options = {}) {
 // Function to retrieve a blob by height and namespace
 async function retrieveBlob(height, namespaceHex) {
   try {
-    // Ensure height is a number
+    // Validate the height
     const heightValue = parseInt(height, 10);
-    if (isNaN(heightValue)) {
-      throw new Error('Height must be a valid number');
+    if (isNaN(heightValue) || heightValue <= 0) {
+      throw new Error('Invalid height. Must be a positive integer.');
     }
     
     // First we need to convert the hex namespace back to base64
@@ -544,25 +637,19 @@ async function retrieveBlob(height, namespaceHex) {
     // Convert to base64 for the API
     const namespaceBase64 = Buffer.from(namespaceArray).toString('base64');
     
-    const payload = {
-      jsonrpc: '2.0',
-      id: 1,
-      method: 'blob.GetAll',
-      params: [heightValue, [namespaceBase64]] // Use heightValue (number) instead of height (string)
-    };
-
     // Simplified logging
     console.log(`Retrieving blob from height ${heightValue} with namespace ${namespaceBase64}`);
     
-    const response = await apiClient.post('', payload);
+    // Use WebSocket to send the request
+    const response = await sendRpcRequest('blob.GetAll', [heightValue, [namespaceBase64]]);
     
-    if (response.data.error) {
-      console.error('Blob retrieval error:', response.data.error);
-      showToast(`Error: ${response.data.error.message}`);
+    if (response.error) {
+      console.error('Blob retrieval error:', response.error);
+      showToast(`Error: ${response.error.message}`);
       return null;
     }
     
-    const result = response.data.result;
+    const result = response.result;
     
     if (!result) {
       console.error('No result in API response');
@@ -1672,26 +1759,21 @@ async function transferTIA(recipientAddress, amountInTIA, gasAdjustment = 1.3) {
       gas_adjustment: gasAdjustment
     };
     
-    const payload = {
-      jsonrpc: '2.0',
-      id: 1,
-      method: 'state.Transfer',
-      params: [
-        recipientAddress,
-        amountInUtia,
-        txConfig // Pass the TxConfig object instead of just the number
-      ]
-    };
-
-    console.log('Transfer payload:', payload);
-    const response = await apiClient.post('', payload);
+    console.log('Transfer parameters:', recipientAddress, amountInUtia, txConfig);
     
-    if (response.data.error) {
-      throw new Error(`API Error: ${response.data.error.message}`);
+    // Use WebSocket to send the request
+    const response = await sendRpcRequest('state.Transfer', [
+      recipientAddress,
+      amountInUtia,
+      txConfig // Pass the TxConfig object instead of just the number
+    ]);
+    
+    if (response.error) {
+      throw new Error(`API Error: ${response.error.message}`);
     }
     
-    console.log('Transfer response:', response.data);
-    return response.data.result;
+    console.log('Transfer response:', response);
+    return response.result;
   } catch (error) {
     console.error('Error transferring TIA:', error);
     throw error;

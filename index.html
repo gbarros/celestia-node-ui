@@ -118,6 +118,22 @@
             display: block;
         }
         
+        /* Fix for button height consistency between light and dark mode */
+        .namespace-options .btn-group .btn {
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+            border-width: 1px !important;
+            font-weight: 400 !important;
+        }
+        
+        .namespace-options .btn-group .btn:active,
+        .namespace-options .btn-group .btn.active {
+            font-weight: 400 !important;
+        }
+        
         /* Toast notification styles */
         .toast-container {
             position: fixed;
@@ -910,11 +926,6 @@
                                 <label for="retrieveNamespace" class="form-label">Namespace (hex)</label>
                                 <input type="text" class="form-control" id="retrieveNamespace" placeholder="Namespace in hex format">
                             </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="retrieveCommitment" class="form-label">Commitment (optional)</label>
-                            <input type="text" class="form-control" id="retrieveCommitment" placeholder="Data commitment (optional)">
-                            <div class="form-text">If provided, will verify the retrieved data matches this commitment</div>
                         </div>
                         <button type="submit" class="btn btn-primary" id="retrieveButton">Retrieve Blob</button>
                     </form>

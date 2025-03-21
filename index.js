@@ -92,7 +92,7 @@ function connectWebSocket() {
         if (connectionStatus) {
           connectionStatus.classList.remove('text-success');
           connectionStatus.classList.add('text-danger');
-          connectionStatus.innerHTML = 'Disconnected from Celestia node<div class="mt-2 small">To connect, please start your node with:<br><code>celestia light start --p2p.network mocha --core.ip rpc-mocha.pops.one --core.port 9090 --rpc.skip-auth</code></div>';
+          connectionStatus.innerHTML = 'Disconnected from Celestia node';
         }
         
         // Show the connection alert
@@ -332,7 +332,18 @@ function setupRealtimeSamplingStats() {
         toggleStreamBtn.classList.remove('btn-success');
         toggleStreamBtn.classList.add('btn-outline-success');
         const indicatorDot = toggleStreamBtn.querySelector('.stream-indicator');
-        if (indicatorDot) indicatorDot.classList.remove('streaming');
+        if (indicatorDot) {
+          indicatorDot.classList.remove('streaming');
+          // Reset to default color
+          indicatorDot.style.backgroundColor = '';
+          // Show pause icon
+          indicatorDot.innerHTML = '&#10074;&#10074;'; // Double vertical bar pause icon
+          indicatorDot.style.fontSize = '10px';
+          indicatorDot.style.display = 'flex';
+          indicatorDot.style.alignItems = 'center';
+          indicatorDot.style.justifyContent = 'center';
+          indicatorDot.style.color = '#28a745'; // Green color to match outline
+        }
         const buttonText = toggleStreamBtn.querySelector('span:not(.stream-indicator)');
         if (buttonText) buttonText.textContent = 'PAUSED';
       } else {
@@ -344,7 +355,14 @@ function setupRealtimeSamplingStats() {
         toggleStreamBtn.classList.remove('btn-outline-success');
         toggleStreamBtn.classList.add('btn-success');
         const indicatorDot = toggleStreamBtn.querySelector('.stream-indicator');
-        if (indicatorDot) indicatorDot.classList.add('streaming');
+        if (indicatorDot) {
+          indicatorDot.classList.add('streaming');
+          // Make the indicator dot white to contrast with green button
+          indicatorDot.style.backgroundColor = '#ffffff';
+          // Remove pause icon
+          indicatorDot.innerHTML = '';
+          indicatorDot.style.fontSize = '';
+        }
         const buttonText = toggleStreamBtn.querySelector('span:not(.stream-indicator)');
         if (buttonText) buttonText.textContent = 'LIVE';
       }
@@ -359,7 +377,14 @@ function setupRealtimeSamplingStats() {
       toggleStreamBtn.classList.remove('btn-outline-success');
       toggleStreamBtn.classList.add('btn-success');
       const indicatorDot = toggleStreamBtn.querySelector('.stream-indicator');
-      if (indicatorDot) indicatorDot.classList.add('streaming');
+      if (indicatorDot) {
+        indicatorDot.classList.add('streaming');
+        // Make the indicator dot white to contrast against the green button background
+        indicatorDot.style.backgroundColor = '#ffffff';
+        // Remove any pause icon
+        indicatorDot.innerHTML = '';
+        indicatorDot.style.fontSize = '';
+      }
       const buttonText = toggleStreamBtn.querySelector('span:not(.stream-indicator)');
       if (buttonText) buttonText.textContent = 'LIVE';
     }
@@ -431,6 +456,13 @@ function setupRealtimeSamplingStats() {
       if (indicatorDot) {
         indicatorDot.classList.remove('streaming');
         indicatorDot.style.backgroundColor = '';
+        // Show pause icon
+        indicatorDot.innerHTML = '&#10074;&#10074;'; // Double vertical bar pause icon
+        indicatorDot.style.fontSize = '10px';
+        indicatorDot.style.display = 'flex';
+        indicatorDot.style.alignItems = 'center';
+        indicatorDot.style.justifyContent = 'center';
+        indicatorDot.style.color = '#28a745'; // Green color to match outline
       }
       const buttonText = toggleStreamBtn.querySelector('span:not(.stream-indicator)');
       if (buttonText) buttonText.textContent = 'PAUSED';
@@ -1874,7 +1906,7 @@ async function updateAllNodeInfo() {
     if (connectionStatus) {
       connectionStatus.classList.remove('text-success', 'text-warning');
       connectionStatus.classList.add('text-danger');
-      connectionStatus.innerHTML = 'Disconnected from Celestia node<div class="mt-2 small">To connect, please start your node with:<br><code>celestia light start --p2p.network mocha --core.ip rpc-mocha.pops.one --core.port 9090 --rpc.skip-auth</code></div>';
+      connectionStatus.innerHTML = 'Disconnected from Celestia node';
     }
     
     // Since connection is lost, immediately update node address with error

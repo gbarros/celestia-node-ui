@@ -802,6 +802,17 @@
             <!-- Node Info Tab -->
             <div class="tab-pane fade show active" id="nodeInfoTab" role="tabpanel" aria-labelledby="node-info-tab">
                 <h4 class="mb-3">Connected Node Information</h4>
+                
+                <!-- Connection Alert for Node Issues -->
+                <div id="nodeConnectionAlert" class="alert alert-danger mb-3" style="display: none;">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <strong>Node Not Connected!</strong>
+                    <p class="mb-1 mt-2">Please start your Celestia light node with the following command:</p>
+                    <div class="bg-dark text-light p-2 rounded mt-1">
+                        <code>celestia light start --p2p.network mocha --core.ip rpc-mocha.pops.one --core.port 9090 --rpc.skip-auth</code>
+                    </div>
+                </div>
+                
                 <div class="node-info">
                     <div class="node-info-title">Connection Status:</div>
                     <div id="connectionStatus" class="node-info-value text-warning">Connecting to WebSocket...</div>

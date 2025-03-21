@@ -34,6 +34,12 @@ function connectWebSocket() {
         connectionStatus.classList.add('text-success');
         connectionStatus.textContent = 'Connected to Celestia node via WebSocket';
       }
+      
+      // Hide the connection alert since we're connected
+      const nodeConnectionAlert = document.getElementById('nodeConnectionAlert');
+      if (nodeConnectionAlert) {
+        nodeConnectionAlert.style.display = 'none';
+      }
     };
     
     ws.onmessage = (event) => {
@@ -86,7 +92,13 @@ function connectWebSocket() {
         if (connectionStatus) {
           connectionStatus.classList.remove('text-success');
           connectionStatus.classList.add('text-danger');
-          connectionStatus.textContent = 'Disconnected from Celestia node';
+          connectionStatus.innerHTML = 'Disconnected from Celestia node<div class="mt-2 small">To connect, please start your node with:<br><code>celestia light start --p2p.network mocha --core.ip rpc-mocha.pops.one --core.port 9090 --rpc.skip-auth</code></div>';
+        }
+        
+        // Show the connection alert
+        const nodeConnectionAlert = document.getElementById('nodeConnectionAlert');
+        if (nodeConnectionAlert) {
+          nodeConnectionAlert.style.display = 'block';
         }
       }
     };
@@ -108,7 +120,7 @@ async function sendRpcRequest(method, params = []) {
     const timeoutPromise = new Promise((_, reject) => {
       setTimeout(() => {
         connectionTimeout = true;
-        reject(new Error('Connection timeout: Unable to connect to Celestia node'));
+        reject(new Error('Connection timeout: Unable to connect to Celestia node. Please start your node with:\ncelestia light start --p2p.network mocha --core.ip rpc-mocha.pops.one --core.port 9090 --rpc.skip-auth'));
       }, 1000);
     });
     
@@ -634,7 +646,7 @@ async function retrieveBlob(height, namespaceHex) {
   try {
     // Check if connected to Celestia node
     if (!isConnected) {
-      throw new Error('Connection timeout: Unable to connect to Celestia node');
+      throw new Error('Connection timeout: Unable to connect to Celestia node. Please start your node with:\ncelestia light start --p2p.network mocha --core.ip rpc-mocha.pops.one --core.port 9090 --rpc.skip-auth');
     }
   
     // Validate the height
@@ -843,7 +855,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (p2pInfo && p2pInfo.ID) {
       nodeP2PInfoElement.textContent = p2pInfo.ID;
     } else {
-      nodeP2PInfoElement.textContent = 'N/A';
+      nodeP2PInfoElement.textContent = 'Unable to fetch p2p info. Is your light node running at localhost:26658?';
       console.error('Failed to get P2P info:', p2pInfo);
     }
   }

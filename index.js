@@ -102,8 +102,20 @@ window.addEventListener('DOMContentLoaded', connectWebSocket);
 // Function to send RPC requests over WebSocket
 async function sendRpcRequest(method, params = []) {
   if (!isConnected) {
-    await new Promise((resolve) => {
+    let connectionTimeout = false;
+    
+    // Set a 1-second timeout for connection attempts
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => {
+        connectionTimeout = true;
+        reject(new Error('Connection timeout: Unable to connect to Celestia node'));
+      }, 1000);
+    });
+    
+    const connectionPromise = new Promise((resolve) => {
       const checkConnection = () => {
+        if (connectionTimeout) return; // Stop checking if timeout occurred
+        
         if (isConnected) {
           resolve();
         } else {
@@ -113,6 +125,9 @@ async function sendRpcRequest(method, params = []) {
       };
       checkConnection();
     });
+    
+    // Race between connection and timeout
+    await Promise.race([connectionPromise, timeoutPromise]);
   }
   
   const id = requestId++;
@@ -125,6 +140,10 @@ async function sendRpcRequest(method, params = []) {
   
   return new Promise((resolve, reject) => {
     try {
+      if (!isConnected) {
+        throw new Error('Not connected to Celestia node');
+      }
+      
       pendingRequests[id] = { resolve, reject };
       ws.send(JSON.stringify(payload));
     } catch (error) {
@@ -613,6 +632,11 @@ async function submitBlob(namespace, data, options = {}) {
 // Function to retrieve a blob by height and namespace
 async function retrieveBlob(height, namespaceHex) {
   try {
+    // Check if connected to Celestia node
+    if (!isConnected) {
+      throw new Error('Connection timeout: Unable to connect to Celestia node');
+    }
+  
     // Validate the height
     const heightValue = parseInt(height, 10);
     if (isNaN(heightValue) || heightValue <= 0) {

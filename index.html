@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
+    <script defer data-domain="gmamo.vercel.app" src="https://plausible.io/js/script.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mammoth Control Panel 🦣</title>
@@ -783,13 +784,13 @@
         <!-- Tab navigation -->
         <ul class="nav nav-tabs" id="mainTabs" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="blob-poster-tab" data-bs-toggle="tab" data-bs-target="#blobPosterTab" type="button" role="tab" aria-controls="blobPosterTab" aria-selected="true">Blob Poster</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="node-info-tab" data-bs-toggle="tab" data-bs-target="#nodeInfoTab" type="button" role="tab" aria-controls="nodeInfoTab" aria-selected="false">Node Info</button>
+                <button class="nav-link active" id="node-info-tab" data-bs-toggle="tab" data-bs-target="#nodeInfoTab" type="button" role="tab" aria-controls="nodeInfoTab" aria-selected="true">Node Info</button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="sampling-stats-tab" data-bs-toggle="tab" data-bs-target="#samplingStatsTab" type="button" role="tab" aria-controls="samplingStatsTab" aria-selected="false">Sampling Stats</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="blob-poster-tab" data-bs-toggle="tab" data-bs-target="#blobPosterTab" type="button" role="tab" aria-controls="blobPosterTab" aria-selected="false">Blob Poster</button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="database-tab" data-bs-toggle="tab" data-bs-target="#databaseTab" type="button" role="tab" aria-controls="databaseTab" aria-selected="false">Private Database Rollup</button>
@@ -798,8 +799,116 @@
         
         <!-- Tab content -->
         <div class="tab-content" id="mainTabsContent">
+            <!-- Node Info Tab -->
+            <div class="tab-pane fade show active" id="nodeInfoTab" role="tabpanel" aria-labelledby="node-info-tab">
+                <h4 class="mb-3">Connected Node Information</h4>
+                <div class="node-info">
+                    <div class="node-info-title">Connection Status:</div>
+                    <div id="connectionStatus" class="node-info-value text-warning">Connecting to WebSocket...</div>
+                    <div class="node-info-title mt-3">Node Address:</div>
+                    <div id="nodeAddress" class="node-info-value">Loading...</div>
+                    <div class="node-info-title mt-3">P2P ID:</div>
+                    <div id="nodeP2PInfo" class="node-info-value">Loading...</div>
+                    <div id="nodeP2PDetails" class="node-p2p-details"></div>
+                    <div class="node-info-title mt-3">Account Balance:</div>
+                    <div id="nodeBalance" class="node-info-value">Loading...</div>
+                </div>
+                
+                <!-- Transfer Section -->
+                <div class="transfer-section mt-4">
+                    <h4 class="mb-3">Send TIA</h4>
+                    <form id="transferForm">
+                        <div class="mb-3">
+                            <label for="recipientAddress" class="form-label">Recipient Address</label>
+                            <input type="text" class="form-control" id="recipientAddress" placeholder="Enter Celestia address" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="transferAmount" class="form-label">Amount (TIA)</label>
+                            <input type="number" class="form-control" id="transferAmount" placeholder="0.01" step="0.000001" min="0.000001" required>
+                            <div class="form-text">Amount in TIA (minimum 0.000001 TIA = 1 utia)</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="gasAdjustment" class="form-label">Gas Adjustment (optional)</label>
+                            <input type="number" class="form-control" id="gasAdjustment" placeholder="1.3" step="0.1" min="1.0" value="1.3">
+                            <div class="form-text">Multiplier for gas estimation (default: 1.3)</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="transferButton">Send TIA</button>
+                    </form>
+                    
+                    <!-- Loading indicator for transfer -->
+                    <div class="loading" id="transferLoading">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <div>Processing transfer...</div>
+                    </div>
+                    
+                    <!-- Error message for transfer -->
+                    <div id="transferError" class="error-message mt-3 alert alert-danger" style="display: none;"></div>
+                    
+                    <!-- Success message for transfer -->
+                    <div id="transferSuccess" class="mt-3 alert alert-success" style="display: none;">
+                        <strong>Transfer successful!</strong> 
+                        <p class="mb-0">The TIA has been sent to the recipient's address.</p>
+                        <p class="mt-2 mb-0"><strong>Transaction Hash:</strong> <span id="transferTxHash"></span></p>
+                        <p class="mt-1"><a id="transferExplorerLink" href="#" target="_blank">View transaction on explorer</a></p>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info mt-4">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    <span>This information is fetched from the Celestia node you're connected to (default is localhost:26658).</span>
+                </div>
+            </div>
+            
+            <!-- Sampling Stats Tab -->
+            <div class="tab-pane fade" id="samplingStatsTab" role="tabpanel" aria-labelledby="sampling-stats-tab">
+                <div class="sampling-stats-container">
+                    <div class="d-flex justify-content-between align-items-center stats-header">
+                        <h5 class="node-info-title m-0">Sampling Syncer Stats:</h5>
+                        <div class="d-flex align-items-center gap-2 controls-container">
+                            <button id="toggleLiveButton" class="btn btn-sm btn-success d-flex align-items-center gap-1 live-button" title="Toggle live updates">
+                                <span class="stream-indicator streaming"></span>
+                                <span>LIVE</span>
+                            </button>
+                            <button id="refreshSamplingStats" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1" title="Refresh stats">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                                    <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                                </svg>
+                                <span>REFRESH</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="text-end small text-muted mt-1 mb-2">
+                        Last updated: <span id="lastUpdatedTime">-</span>
+                    </div>
+                    <div class="mt-2">
+                        <strong>Sync Progress:</strong>
+                        <div class="progress mt-1 position-relative" style="height: 38px; background-color: #e9ecef;">
+                            <div id="syncProgressBar" class="progress-bar progress-bar-striped progress-bar-animated d-flex align-items-center justify-content-end pe-2" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%"></div>
+                            <div id="samplingStats" class="progress-status-text">Loading...</div>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <strong>Catch-up Status:</strong> <span id="catchupStatus">-</span>
+                    </div>
+                    <div class="mt-2 d-flex justify-content-between">
+                        <span><strong>Head of Sampled Chain:</strong> <span id="headOfSampledChain">-</span></span>
+                        <span><strong>Head of Catchup:</strong> <span id="headOfCatchup">-</span></span>
+                        <span><strong>Network Head Height:</strong> <span id="networkHeadHeight">-</span></span>
+                    </div>
+                    <div class="mt-2">
+                        <strong>Workers:</strong> <span id="workersCount">-</span>
+                        <div class="workers-container">
+                            <div id="workersDetails" class="mt-2" style="max-height: 300px; overflow-y: auto; font-size: 0.85rem;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
             <!-- Blob Poster Tab -->
-            <div class="tab-pane fade show active" id="blobPosterTab" role="tabpanel" aria-labelledby="blob-poster-tab">
+            <div class="tab-pane fade" id="blobPosterTab" role="tabpanel" aria-labelledby="blob-poster-tab">
                 <h4>Post Blob Data</h4>
                 <div class="d-flex align-items-center mb-3">
                     <h5 class="mb-0">Namespace <i class="bi bi-info-circle text-secondary" style="font-size: 1rem; cursor: pointer; vertical-align: middle; margin-left: 4px;" data-bs-toggle="modal" data-bs-target="#namespaceInfoModal"></i></h5>
@@ -830,7 +939,6 @@
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                <a href="https://celestiaorg.github.io/celestia-app/namespace.html" target="_blank">Read official Celestia namespace documentation</a>
                             </div>
                         </div>
                     </div>
@@ -996,116 +1104,8 @@
                 </div>
             </div>
             
-            <!-- Node Info Tab -->
-            <div class="tab-pane fade" id="nodeInfoTab" role="tabpanel" aria-labelledby="node-info-tab">
-                <h4 class="mb-3">Connected Node Information</h4>
-                <div class="node-info">
-                    <div class="node-info-title">Connection Status:</div>
-                    <div id="connectionStatus" class="node-info-value text-warning">Connecting to WebSocket...</div>
-                    <div class="node-info-title mt-3">Node Address:</div>
-                    <div id="nodeAddress" class="node-info-value">Loading...</div>
-                    <div class="node-info-title mt-3">P2P ID:</div>
-                    <div id="nodeP2PInfo" class="node-info-value">Loading...</div>
-                    <div id="nodeP2PDetails" class="node-p2p-details"></div>
-                    <div class="node-info-title mt-3">Account Balance:</div>
-                    <div id="nodeBalance" class="node-info-value">Loading...</div>
-                </div>
-                
-                <!-- Transfer Section -->
-                <div class="transfer-section mt-4">
-                    <h4 class="mb-3">Send TIA</h4>
-                    <form id="transferForm">
-                        <div class="mb-3">
-                            <label for="recipientAddress" class="form-label">Recipient Address</label>
-                            <input type="text" class="form-control" id="recipientAddress" placeholder="Enter Celestia address" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="transferAmount" class="form-label">Amount (TIA)</label>
-                            <input type="number" class="form-control" id="transferAmount" placeholder="0.01" step="0.000001" min="0.000001" required>
-                            <div class="form-text">Amount in TIA (minimum 0.000001 TIA = 1 utia)</div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="gasAdjustment" class="form-label">Gas Adjustment (optional)</label>
-                            <input type="number" class="form-control" id="gasAdjustment" placeholder="1.3" step="0.1" min="1.0" value="1.3">
-                            <div class="form-text">Multiplier for gas estimation (default: 1.3)</div>
-                        </div>
-                        <button type="submit" class="btn btn-primary" id="transferButton">Send TIA</button>
-                    </form>
-                    
-                    <!-- Loading indicator for transfer -->
-                    <div class="loading" id="transferLoading">
-                        <div class="spinner-border" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                        <div>Processing transfer...</div>
-                    </div>
-                    
-                    <!-- Error message for transfer -->
-                    <div id="transferError" class="error-message mt-3 alert alert-danger" style="display: none;"></div>
-                    
-                    <!-- Success message for transfer -->
-                    <div id="transferSuccess" class="mt-3 alert alert-success" style="display: none;">
-                        <strong>Transfer successful!</strong> 
-                        <p class="mb-0">The TIA has been sent to the recipient's address.</p>
-                        <p class="mt-2 mb-0"><strong>Transaction Hash:</strong> <span id="transferTxHash"></span></p>
-                        <p class="mt-1"><a id="transferExplorerLink" href="#" target="_blank">View transaction on explorer</a></p>
-                    </div>
-                </div>
-                
-                <div class="alert alert-info mt-4">
-                    <i class="bi bi-info-circle-fill me-2"></i>
-                    <span>This information is fetched from the Celestia node you're connected to (default is localhost:26658).</span>
-                </div>
-            </div>
-            
-            <!-- Sampling Stats Tab -->
-            <div class="tab-pane fade" id="samplingStatsTab" role="tabpanel" aria-labelledby="sampling-stats-tab">
-                <div class="sampling-stats-container">
-                    <div class="d-flex justify-content-between align-items-center stats-header">
-                        <h5 class="node-info-title m-0">Sampling Syncer Stats:</h5>
-                        <div class="d-flex align-items-center gap-2 controls-container">
-                            <button id="toggleLiveButton" class="btn btn-sm btn-success d-flex align-items-center gap-1 live-button" title="Toggle live updates">
-                                <span class="stream-indicator streaming"></span>
-                                <span>LIVE</span>
-                            </button>
-                            <button id="refreshSamplingStats" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1" title="Refresh stats">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16">
-                                    <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
-                                    <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
-                                </svg>
-                                <span>REFRESH</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="text-end small text-muted mt-1 mb-2">
-                        Last updated: <span id="lastUpdatedTime">-</span>
-                    </div>
-                    <div class="mt-2">
-                        <strong>Sync Progress:</strong>
-                        <div class="progress mt-1 position-relative" style="height: 38px; background-color: #e9ecef;">
-                            <div id="syncProgressBar" class="progress-bar progress-bar-striped progress-bar-animated d-flex align-items-center justify-content-end pe-2" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%"></div>
-                            <div id="samplingStats" class="progress-status-text">Loading...</div>
-                        </div>
-                    </div>
-                    <div class="mt-2">
-                        <strong>Catch-up Status:</strong> <span id="catchupStatus">-</span>
-                    </div>
-                    <div class="mt-2 d-flex justify-content-between">
-                        <span><strong>Head of Sampled Chain:</strong> <span id="headOfSampledChain">-</span></span>
-                        <span><strong>Head of Catchup:</strong> <span id="headOfCatchup">-</span></span>
-                        <span><strong>Network Head Height:</strong> <span id="networkHeadHeight">-</span></span>
-                    </div>
-                    <div class="mt-2">
-                        <strong>Workers:</strong> <span id="workersCount">-</span>
-                        <div class="workers-container">
-                            <div id="workersDetails" class="mt-2" style="max-height: 300px; overflow-y: auto; font-size: 0.85rem;"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <!-- Database Tab -->
-            <div class="tab-pane fade" id="databaseTab" roif le="tabpanel" aria-labelledby="database-tab">
+            <div class="tab-pane fade" id="databaseTab" role="tabpanel" aria-labelledby="database-tab">
                 <div class="database-container">
                     <h4 class="mb-3">Celestia Private Database Rollup</h4>
                     

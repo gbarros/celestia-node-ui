@@ -100,6 +100,9 @@ function connectWebSocket() {
         if (nodeConnectionAlert) {
           nodeConnectionAlert.style.display = 'block';
         }
+        
+        // Update all node information to show error states
+        updateAllNodeInfo();
       }
     };
   } catch (error) {
@@ -863,21 +866,51 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Fetch and display node balance
   await refreshNodeBalance();
   
-  // Set up periodic balance refresh (every 30 seconds)
+  // Set up periodic balance refresh (every 5 seconds for quicker update)
   const nodeBalanceElement = document.getElementById('nodeBalance');
   setInterval(async () => {
-    const updatedBalance = await getNodeBalance();
-    if (nodeBalanceElement && updatedBalance) {
-      // Only update if the value changed
-      if (nodeBalanceElement.textContent !== updatedBalance) {
-        nodeBalanceElement.textContent = updatedBalance;
-        nodeBalanceElement.classList.remove('value-changed');
-        // Force reflow to restart animation
-        void nodeBalanceElement.offsetWidth;
-        nodeBalanceElement.classList.add('value-changed');
+    try {
+      // First check if we're connected before trying to get the balance
+      if (!isConnected) {
+        // If we're already disconnected, make sure UI reflects this state
+        if (nodeBalanceElement) {
+          nodeBalanceElement.textContent = 'Unable to fetch balance. Is your node running?';
+          nodeBalanceElement.classList.add('text-danger');
+        }
+        await updateAllNodeInfo();
+        return;
+      }
+      
+      const updatedBalance = await getNodeBalance();
+      if (nodeBalanceElement) {
+        if (updatedBalance && !updatedBalance.includes('Unable to fetch')) {
+          // Only update if the value changed
+          if (nodeBalanceElement.textContent !== updatedBalance) {
+            // Remove text-danger if it was previously showing an error
+            nodeBalanceElement.classList.remove('text-danger');
+            
+            nodeBalanceElement.textContent = updatedBalance;
+            nodeBalanceElement.classList.remove('value-changed');
+            // Force reflow to restart animation
+            void nodeBalanceElement.offsetWidth;
+            nodeBalanceElement.classList.add('value-changed');
+          }
+        } else {
+          // If balance check fails, update all node info
+          nodeBalanceElement.textContent = 'Unable to fetch balance. Is your node running?';
+          nodeBalanceElement.classList.add('text-danger');
+          await updateAllNodeInfo();
+        }
+      }
+    } catch (error) {
+      console.error('Error in balance refresh interval:', error);
+      if (nodeBalanceElement) {
+        nodeBalanceElement.textContent = 'Unable to fetch balance. Is your node running?';
+        nodeBalanceElement.classList.add('text-danger');
+        await updateAllNodeInfo();
       }
     }
-  }, 30000);
+  }, 5000); // Changed from 30000 to 5000 for faster detection of node shutdown
   
   // Fetch and display sampling stats
   const samplingStats = await getSamplingStats();
@@ -1788,17 +1821,115 @@ function copyToClipboard(text) {
   });
 }
 
-// Function to refresh the node balance
+// Function to refresh node balance
 async function refreshNodeBalance() {
-  const nodeBalanceElement = document.getElementById('nodeBalance');
-  const balance = await getNodeBalance();
-  if (nodeBalanceElement) {
-    // Add animation to highlight the updated balance
-    nodeBalanceElement.textContent = balance;
-    nodeBalanceElement.classList.remove('value-changed');
-    // Force reflow to restart animation
-    void nodeBalanceElement.offsetWidth;
-    nodeBalanceElement.classList.add('value-changed');
+  try {
+    const balance = await getNodeBalance();
+    const nodeBalanceElement = document.getElementById('nodeBalance');
+    
+    if (nodeBalanceElement) {
+      // Consider any balance result containing "Unable to fetch" as an error
+      if (balance && !balance.includes('Unable to fetch')) {
+        nodeBalanceElement.textContent = balance;
+        nodeBalanceElement.classList.remove('text-danger');
+        nodeBalanceElement.classList.add('value-changed');
+        // Animation will be removed after a delay
+        setTimeout(() => {
+          nodeBalanceElement.classList.remove('value-changed');
+        }, 1500);
+      } else {
+        // If balance check fails, display error and update all node info
+        nodeBalanceElement.textContent = 'Unable to fetch balance. Is your node running?';
+        nodeBalanceElement.classList.add('text-danger');
+        
+        // Since balance check failed, check all other node info as well
+        await updateAllNodeInfo();
+      }
+    }
+  } catch (error) {
+    console.error('Error refreshing balance:', error);
+    const nodeBalanceElement = document.getElementById('nodeBalance');
+    if (nodeBalanceElement) {
+      nodeBalanceElement.textContent = 'Unable to fetch balance. Is your node running?';
+      nodeBalanceElement.classList.add('text-danger');
+      
+      // Since balance check failed with error, update all other node info as well
+      await updateAllNodeInfo();
+    }
+  }
+}
+
+// Function to update all node information when connection might be lost
+async function updateAllNodeInfo() {
+  // Check connection status first
+  if (!isConnected) {
+    // Update the connection alert
+    const nodeConnectionAlert = document.getElementById('nodeConnectionAlert');
+    if (nodeConnectionAlert) {
+      nodeConnectionAlert.style.display = 'block';
+    }
+    
+    // Update connection status message
+    const connectionStatus = document.getElementById('connectionStatus');
+    if (connectionStatus) {
+      connectionStatus.classList.remove('text-success', 'text-warning');
+      connectionStatus.classList.add('text-danger');
+      connectionStatus.innerHTML = 'Disconnected from Celestia node<div class="mt-2 small">To connect, please start your node with:<br><code>celestia light start --p2p.network mocha --core.ip rpc-mocha.pops.one --core.port 9090 --rpc.skip-auth</code></div>';
+    }
+    
+    // Since connection is lost, immediately update node address with error
+    const nodeAddressElement = document.getElementById('nodeAddress');
+    if (nodeAddressElement) {
+      nodeAddressElement.textContent = 'Unable to fetch address. Is your node running?';
+      nodeAddressElement.classList.add('text-danger');
+    }
+    
+    // Immediately update P2P info with error
+    const nodeP2PInfoElement = document.getElementById('nodeP2PInfo');
+    if (nodeP2PInfoElement) {
+      nodeP2PInfoElement.textContent = 'Unable to fetch P2P info. Is your node running?';
+      nodeP2PInfoElement.classList.add('text-danger');
+    }
+    
+    // Return early since connection is lost, no need to try fetching data
+    return;
+  }
+  
+  // Only try to fetch data if connected
+  // Update node address
+  const nodeAddressElement = document.getElementById('nodeAddress');
+  if (nodeAddressElement) {
+    try {
+      const address = await getNodeAddress();
+      if (address) {
+        nodeAddressElement.textContent = address;
+        nodeAddressElement.classList.remove('text-danger');
+      } else {
+        nodeAddressElement.textContent = 'Unable to fetch address. Is your node running?';
+        nodeAddressElement.classList.add('text-danger');
+      }
+    } catch (error) {
+      nodeAddressElement.textContent = 'Unable to fetch address. Is your node running?';
+      nodeAddressElement.classList.add('text-danger');
+    }
+  }
+  
+  // Update P2P info
+  const nodeP2PInfoElement = document.getElementById('nodeP2PInfo');
+  if (nodeP2PInfoElement) {
+    try {
+      const p2pInfo = await getNodeP2PInfo();
+      if (p2pInfo && p2pInfo.ID) {
+        nodeP2PInfoElement.textContent = p2pInfo.ID;
+        nodeP2PInfoElement.classList.remove('text-danger');
+      } else {
+        nodeP2PInfoElement.textContent = 'Unable to fetch P2P info. Is your node running?';
+        nodeP2PInfoElement.classList.add('text-danger');
+      }
+    } catch (error) {
+      nodeP2PInfoElement.textContent = 'Unable to fetch P2P info. Is your node running?';
+      nodeP2PInfoElement.classList.add('text-danger');
+    }
   }
 }
 

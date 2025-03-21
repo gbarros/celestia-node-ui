@@ -768,41 +768,60 @@ strong, b, .font-weight-bold, .fw-bold {
   color: #495057;
 }
 
-/* Sampling stats styling for both themes */
+/* Standardize sampling stats container padding and margins for both themes */
 .sampling-stats-container {
-  padding: 20px;
-  border-radius: 10px;
+  padding: 20px !important;
+  border-radius: 10px !important;
+  margin: 20px 0 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
   background-color: var(--namespace-bg);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  margin-top: 15px;
 }
 
-.sampling-stats-container .mt-2 {
+/* Make sure the sync progress section has identical dimensions in both themes */
+.sampling-stats-container .mt-2:has(.progress) {
   margin-top: 15px !important;
+  margin-bottom: 15px !important;
+  padding: 0 !important;
 }
 
-.sampling-stats-container h5.node-info-title {
-  color: var(--primary-color);
-  font-size: 1.25rem;
-  margin-bottom: 15px;
+/* Standardize progress bar dimensions and positioning */
+.sampling-stats-container .progress:not(#workersDetails .progress) {
+  background-color: rgba(0, 0, 0, 0.05);
+  height: 38px !important;
+  border-radius: 6px !important;
+  overflow: hidden !important;
+  position: relative !important;
+  margin: 5px 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
-.sampling-stats-container strong {
-  font-size: 1.1em;
-  display: block;
-  margin-bottom: 10px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  padding-bottom: 5px;
-}
-
-/* Only override specific properties for dark mode */
+/* Ensure dark mode uses identical dimensions */
 [data-theme="dark"] .sampling-stats-container {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  padding: 20px !important;
+  margin: 20px 0 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  background-color: var(--namespace-bg);
 }
 
-[data-theme="dark"] .sampling-stats-container strong {
-  color: #e0e0e0;
-  border-bottom-color: rgba(255, 255, 255, 0.1);
+/* Standardize dark mode progress bar dimensions */
+[data-theme="dark"] .sampling-stats-container .progress:not(#workersDetails .progress) {
+  height: 38px !important;
+  margin: 5px 0 !important;
+  padding: 0 !important;
+}
+
+/* Standardize section headings to prevent spacing shifts */
+.sampling-stats-container > div > strong {
+  display: block !important;
+  margin-top: 15px !important;
+  margin-bottom: 5px !important;
+  padding-bottom: 5px !important;
+  height: auto !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
 }
 
 /* Catchup status and measurements */
@@ -990,7 +1009,7 @@ strong, b, .font-weight-bold, .fw-bold {
 }
 
 [data-theme="dark"] .sampling-stats-container strong {
-  font-weight: var(--font-weight-bold);
+  font-weight: var(--font-weight-bold) !important;
   font-size: var(--font-size-base);
 }
 
@@ -1246,4 +1265,83 @@ strong, b, .font-weight-bold, .fw-bold {
 [data-theme="dark"] pre,
 [data-theme="dark"] code {
   /* Font properties now come from standardized selectors */
+}
+
+/* Fix bold text in dark mode */
+[data-theme="dark"] .font-weight-bold,
+[data-theme="dark"] .fw-bold,
+[data-theme="dark"] strong,
+[data-theme="dark"] b {
+  font-weight: var(--font-weight-bold) !important;
+}
+
+/* Make sure this block has !important to override any other styles */
+[data-theme="dark"] .sampling-stats-container strong {
+  font-weight: var(--font-weight-bold) !important;
+  font-size: var(--font-size-base);
+}
+
+/* Ensure catch-up status and other elements don't override bold styling for strong tags */
+[data-theme="dark"] #catchupStatus,
+[data-theme="dark"] #headOfSampledChain,
+[data-theme="dark"] #headOfCatchup,
+[data-theme="dark"] #networkHeadHeight,
+[data-theme="dark"] #samplingStats {
+  font-weight: var(--font-weight-normal);
+}
+
+/* Explicitly set strong tags to be bold even in these elements */
+[data-theme="dark"] #catchupStatus strong,
+[data-theme="dark"] #headOfSampledChain strong,
+[data-theme="dark"] #headOfCatchup strong,
+[data-theme="dark"] #networkHeadHeight strong,
+[data-theme="dark"] #samplingStats strong {
+  font-weight: var(--font-weight-bold) !important;
+}
+
+/* Make sure sampling stats shows as bold in dark mode */
+[data-theme="dark"] #samplingStats {
+  font-weight: var(--font-weight-bold) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Make catch-up status bold in dark mode */
+[data-theme="dark"] #catchupStatus {
+  font-weight: var(--font-weight-bold) !important;
+  background-color: rgba(13, 110, 253, 0.2);
+  color: #a2c0ff;
+  border: 1px solid rgba(13, 110, 253, 0.3);
+}
+
+/* Make worker table headers bold in dark mode */
+[data-theme="dark"] #workersDetails table.table th {
+  font-weight: var(--font-weight-bold) !important;
+  color: var(--primary-color) !important;
+  background-color: var(--secondary-bg) !important;
+  padding: 10px !important;
+  border-bottom: 2px solid var(--border-color) !important;
+}
+
+/* Add bottom border lines to section headers in light mode */
+.sampling-stats-container > div > strong {
+  display: block !important;
+  margin-top: 15px !important;
+  margin-bottom: 5px !important;
+  padding-bottom: 5px !important;
+  height: auto !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Make section headers consistent across themes */
+.sampling-stats-container strong {
+  font-size: 1.1em;
+  display: block;
+  margin-bottom: 10px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding-bottom: 5px;
+}
+
+/* Keep dark mode border color different */
+[data-theme="dark"] .sampling-stats-container strong {
+  border-bottom-color: rgba(255, 255, 255, 0.1) !important;
 } 

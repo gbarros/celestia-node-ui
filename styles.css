@@ -53,7 +53,7 @@
   --font-size-h5: 1rem;
   --font-size-h6: 0.9rem;
   --font-weight-normal: normal;
-  --font-weight-bold: 500;
+  --font-weight-bold: 600;
   --line-height-base: 1.4;
   --letter-spacing-normal: normal;
   --text-shadow-none: none;
@@ -116,7 +116,7 @@ pre, code, .code-block, .command-box, .result-value, .node-info-value, .hex-disp
 
 /* Standardize form elements */
 .form-label {
-  font-weight: var(--font-weight-normal);
+  font-weight: var(--font-weight-bold);
   font-size: var(--font-size-base);
 }
 
@@ -1193,7 +1193,8 @@ strong, b, .font-weight-bold, .fw-bold {
 /* Fix the conflicting and redundant dark mode font styles in database section */
 [data-theme="dark"] .database-container h4,
 [data-theme="dark"] .database-container h5,
-[data-theme="dark"] .database-container h6 {
+[data-theme="dark"] .database-container h6,
+[data-theme="dark"] .database-container .card-header h5 {
   color: var(--primary-color);
   /* Font weight and other properties now come from our standardized selectors */
 }
@@ -1344,4 +1345,262 @@ strong, b, .font-weight-bold, .fw-bold {
 /* Keep dark mode border color different */
 [data-theme="dark"] .sampling-stats-container strong {
   border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Standardize heading styles across all tabs for both light and dark modes */
+:root {
+    /* Standard heading sizes */
+    --font-size-h4: 1.15rem;
+    --font-size-h5: 1rem;
+    --font-size-h6: 0.9rem;
+    
+    /* Standard font weights */
+    --font-weight-normal: normal;
+    --font-weight-bold: 600;
+}
+
+/* Make all headings consistent */
+h4, .h4 {
+    font-size: var(--font-size-h4);
+    font-weight: var(--font-weight-bold);
+    margin-bottom: 1rem;
+}
+
+h5, .h5 {
+    font-size: var(--font-size-h5);
+    font-weight: var(--font-weight-bold);
+    margin-bottom: 0.75rem;
+}
+
+h6, .h6 {
+    font-size: var(--font-size-h6);
+    font-weight: var(--font-weight-bold);
+    margin-bottom: 0.5rem;
+}
+
+/* Standardize node-info-title class */
+.node-info-title {
+    font-weight: var(--font-weight-bold);
+    margin-bottom: 0.5rem;
+    color: var(--primary-color);
+    font-size: var(--font-size-h5);
+}
+
+/* Make "Sampling Syncer Stats" consistent */
+.sampling-stats-container h5.node-info-title {
+    font-size: var(--font-size-h5);
+    font-weight: var(--font-weight-bold);
+}
+
+/* Make all bold elements consistent */
+strong, b, .font-weight-bold, .fw-bold {
+    font-weight: var(--font-weight-bold);
+}
+
+/* Standardize form labels in all sections */
+.form-label {
+    font-weight: var(--font-weight-bold);
+}
+
+/* Ensure database labels are consistent */
+.database-container .form-label,
+.database-container label {
+    font-weight: var(--font-weight-bold);
+}
+
+/* Ensure database headings are consistent */
+.database-container h4,
+.database-container h5,
+.database-container h6,
+.database-container .card-header h5 {
+    font-weight: var(--font-weight-bold);
+}
+
+/* Fix hex display in all sections */
+.hex-display {
+    font-weight: var(--font-weight-normal);
+}
+
+/* Ensure dark mode styles match light mode */
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6,
+[data-theme="dark"] .node-info-title,
+[data-theme="dark"] .sampling-stats-container h5.node-info-title,
+[data-theme="dark"] .database-container h4,
+[data-theme="dark"] .database-container h5,
+[data-theme="dark"] .database-container h6,
+[data-theme="dark"] .database-container .card-header h5 {
+    font-weight: var(--font-weight-bold);
+}
+
+[data-theme="dark"] strong,
+[data-theme="dark"] b,
+[data-theme="dark"] .font-weight-bold,
+[data-theme="dark"] .fw-bold,
+[data-theme="dark"] .form-label,
+[data-theme="dark"] .database-container .form-label,
+[data-theme="dark"] .database-container label {
+    font-weight: var(--font-weight-bold);
+}
+
+/* Standardize the database section hex display */
+[data-theme="dark"] .hex-display,
+[data-theme="light"] .hex-display {
+    font-weight: var(--font-weight-normal);
+    color: var(--primary-color);
+}
+
+/* Make sure sampling stats font weight is consistent */
+#samplingStats {
+    font-weight: var(--font-weight-normal);
+}
+
+[data-theme="dark"] #samplingStats {
+    font-weight: var(--font-weight-normal);
+}
+
+/* Fix strong elements in sampling stats container */
+.sampling-stats-container strong {
+    font-weight: var(--font-weight-bold);
+}
+
+[data-theme="dark"] .sampling-stats-container strong {
+    font-weight: var(--font-weight-bold);
+}
+
+/* Fix sampling stats text consistency */
+/* Make section headers like "Sync Progress" and "Catch-up Status" consistent size */
+.sampling-stats-container strong,
+[data-theme="dark"] .sampling-stats-container strong {
+    font-size: var(--font-size-h5) !important;
+    font-weight: var(--font-weight-bold) !important;
+    display: block;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .sampling-stats-container strong {
+    border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Make sure "Sampling Syncer Stats" heading is the same size in both modes */
+.sampling-stats-container h5.node-info-title,
+[data-theme="dark"] .sampling-stats-container h5.node-info-title {
+    font-size: var(--font-size-h4) !important;
+    font-weight: var(--font-weight-bold) !important;
+    margin-bottom: 15px !important;
+    color: var(--primary-color);
+}
+
+/* Fix the "Synced (x blocks behind head)" text to be consistent */
+#samplingStats,
+[data-theme="dark"] #samplingStats {
+    font-weight: var(--font-weight-bold) !important;
+    font-size: var(--font-size-base) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Make "Celestia Private Database Rollup" consistent */
+.database-container h4.mb-3,
+[data-theme="dark"] .database-container h4.mb-3 {
+    font-size: var(--font-size-h4) !important;
+    font-weight: var(--font-weight-bold) !important;
+    margin-bottom: 1rem !important;
+    color: var(--primary-color);
+}
+
+/* Make "Initialize Database" consistent */
+.database-container .card-header h5.mb-0,
+[data-theme="dark"] .database-container .card-header h5.mb-0 {
+    font-size: var(--font-size-h5) !important;
+    font-weight: var(--font-weight-bold) !important;
+    margin-bottom: 0 !important;
+}
+
+/* Fix "Database Namespace", "Database Schema (JSON)", and other form labels */
+.database-container .form-label,
+.database-container label,
+[data-theme="dark"] .database-container .form-label,
+[data-theme="dark"] .database-container label {
+    font-weight: var(--font-weight-bold) !important;
+    font-size: var(--font-size-base) !important;
+}
+
+/* Fix "Database Schema" and "Schema Metadata" headings */
+.database-container h6,
+[data-theme="dark"] .database-container h6 {
+    font-size: var(--font-size-h6) !important;
+    font-weight: var(--font-weight-bold) !important;
+    margin-bottom: 0.5rem !important;
+}
+
+/* Fix "Record Data (JSON)" and table headers */
+.database-container table th,
+[data-theme="dark"] .database-container table th {
+    font-weight: var(--font-weight-bold) !important;
+    font-size: var(--font-size-base) !important;
+}
+
+/* Ensure all database card header h5 elements are consistent */
+.card-header h5,
+[data-theme="dark"] .card-header h5 {
+    font-size: var(--font-size-h5) !important;
+    font-weight: var(--font-weight-bold) !important;
+}
+
+/* Ensure worker statistics are consistent */
+#workersCount,
+[data-theme="dark"] #workersCount,
+#catchupStatus,
+[data-theme="dark"] #catchupStatus,
+#headOfSampledChain,
+[data-theme="dark"] #headOfSampledChain,
+#headOfCatchup,
+[data-theme="dark"] #headOfCatchup,
+#networkHeadHeight,
+[data-theme="dark"] #networkHeadHeight {
+    font-weight: var(--font-weight-bold) !important;
+    font-size: var(--font-size-base) !important;
+}
+
+/* Fix node info titles in both modes */
+.node-info-title,
+[data-theme="dark"] .node-info-title {
+    font-size: var(--font-size-h5) !important;
+    font-weight: var(--font-weight-bold) !important;
+    margin-bottom: 0.5rem !important;
+    color: var(--primary-color);
+}
+
+/* Override any conflicting styles that might be interfering */
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6,
+h4, h5, h6 {
+    font-family: 'Youth', var(--font-family-base);
+}
+
+/* Force proper bold font weight */
+[data-theme="dark"] b,
+[data-theme="dark"] strong,
+b, strong {
+    font-weight: var(--font-weight-bold) !important; 
+}
+
+/* Add consistent spacing between Catch-up Status and Head of Sampled Chain */
+.sampling-stats-container strong:has(+ div:has(#catchupStatus)) {
+    margin-bottom: 15px !important;
+}
+
+.sampling-stats-container div:has(#catchupStatus) {
+    margin-bottom: 25px !important;
+}
+
+/* Ensure both light and dark mode have the same spacing */
+[data-theme="dark"] .sampling-stats-container div:has(#catchupStatus),
+.sampling-stats-container div:has(#catchupStatus) {
+    margin-bottom: 25px !important;
+    padding-bottom: 5px !important;
 } 

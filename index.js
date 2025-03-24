@@ -1003,6 +1003,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const recipientAddress = document.getElementById('recipientAddress').value.trim();
       const transferAmount = document.getElementById('transferAmount').value;
       const gasAdjustment = parseFloat(document.getElementById('gasAdjustment').value) || 1.3;
+      const maxGasPrice = document.getElementById('maxGasPrice').value ? parseFloat(document.getElementById('maxGasPrice').value) : 0.002;
       
       if (!recipientAddress) {
         transferError.textContent = 'Please enter a valid recipient address';
@@ -1023,7 +1024,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         transferSuccess.style.display = 'none';
         transferLoading.style.display = 'block';
         
-        const txResult = await transferTIA(recipientAddress, transferAmount, gasAdjustment);
+        const txResult = await transferTIA(recipientAddress, transferAmount, gasAdjustment, maxGasPrice);
         
         // Show success message with transaction details
         if (txResult && txResult.txhash) {
@@ -1966,14 +1967,16 @@ async function updateAllNodeInfo() {
 }
 
 // Function to transfer TIA to another address
-async function transferTIA(recipientAddress, amountInTIA, gasAdjustment = 1.3) {
+async function transferTIA(recipientAddress, amountInTIA, gasAdjustment = 1.3, maxGasPrice = 0.002) {
   try {
     // Convert TIA to utia (1 TIA = 1,000,000 utia)
     const amountInUtia = Math.floor(parseFloat(amountInTIA) * 1000000).toString();
     
     // Create a proper TxConfig object for the third parameter
     const txConfig = {
-      gas_adjustment: gasAdjustment
+      gas_adjustment: gasAdjustment,
+      // Convert max gas price from TIA to utia
+      max_gas_price: parseFloat(maxGasPrice) * 1000000
     };
     
     console.log('Transfer parameters:', recipientAddress, amountInUtia, txConfig);

@@ -115,6 +115,10 @@ This tab provides functionality to create and manage a database-like structure o
 2. **Add Records**:
    - Add new records according to your schema
    - Records are automatically encrypted before being submitted to the network
+   - **Schema Validation**: Records are validated against your defined schema
+     - Rejects records with missing required fields
+     - Prevents adding fields not defined in the schema
+     - Ensures data types match the schema definition
 
 3. **View Records**:
    - Browse all records in your database

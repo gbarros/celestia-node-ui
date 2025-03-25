@@ -2205,6 +2205,18 @@ async function addDatabaseRecord(data) {
             throw new Error('Invalid data format. Please provide valid JSON.');
         }
         
+        // Retrieve the schema and validate against it
+        const schemaData = await retrieveDatabaseSchema();
+        if (!schemaData || !schemaData.schema) {
+            throw new Error('Failed to retrieve database schema for validation');
+        }
+        
+        // Validate the data against the schema
+        const validationResult = validateDataAgainstSchema(dataObj, schemaData.schema);
+        if (!validationResult.valid) {
+            throw new Error(`Schema validation failed: ${validationResult.error}`);
+        }
+        
         // Create the record object with metadata
         const record = {
             data: dataObj,
@@ -2243,6 +2255,47 @@ async function addDatabaseRecord(data) {
     } catch (error) {
         console.error('Error adding record to database:', error);
         throw error;
+    }
+}
+
+// Function to validate data against the database schema
+function validateDataAgainstSchema(data, schema) {
+    try {
+        // Check if all required fields from the schema are present
+        for (const [field, type] of Object.entries(schema)) {
+            if (!(field in data)) {
+                return {
+                    valid: false,
+                    error: `Missing required field: ${field}`
+                };
+            }
+            
+            // Check field type
+            const actualType = typeof data[field];
+            if (type !== "string" && actualType !== type) {
+                return {
+                    valid: false,
+                    error: `Field ${field} should be of type ${type}, but got ${actualType}`
+                };
+            }
+        }
+        
+        // Check for extra fields not defined in the schema
+        for (const field in data) {
+            if (!(field in schema)) {
+                return {
+                    valid: false,
+                    error: `Unknown field not defined in schema: ${field}`
+                };
+            }
+        }
+        
+        return { valid: true };
+    } catch (error) {
+        return {
+            valid: false,
+            error: `Validation error: ${error.message}`
+        };
     }
 }
 

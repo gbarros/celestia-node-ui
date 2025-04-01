@@ -1006,7 +1006,18 @@
 
                     <div class="mb-3">
                         <label for="data" class="form-label">Data (base64)</label>
-                        <textarea class="form-control" id="data" rows="5" placeholder="Enter data in base64 format" required></textarea>
+                        <textarea class="form-control" id="data" rows="4" placeholder="Enter data in base64 format"></textarea>
+                        <div class="form-text">Data must be base64 encoded</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="imageUpload" class="form-label">Or Upload an Image</label>
+                        <input type="file" class="form-control" id="imageUpload" accept="image/*">
+                        <div class="form-text">Image will be automatically optimized to 1.9MB maximum</div>
+                        <div id="imagePreview" class="mt-2" style="display: none;">
+                            <img id="previewImage" class="img-fluid" style="max-height: 200px;">
+                            <div class="form-text">Preview of optimized image</div>
+                        </div>
                     </div>
 
                     <div class="mb-3">

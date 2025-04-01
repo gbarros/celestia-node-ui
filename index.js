@@ -789,6 +789,11 @@ const resultNamespaceBase64Element = document.getElementById('resultNamespaceBas
 const nodeAddressElement = document.getElementById('nodeAddress');
 const nodeP2PInfoElement = document.getElementById('nodeP2PInfo');
 
+// Image upload elements
+const imageUploadInput = document.getElementById('imageUpload');
+const imagePreviewContainer = document.getElementById('imagePreview');
+const previewImage = document.getElementById('previewImage');
+
 // Namespace hex display elements
 const base64NamespacePreview = document.getElementById('base64NamespacePreview');
 const plaintextNamespacePreview = document.getElementById('plaintextNamespacePreview');
@@ -1702,68 +1707,135 @@ function updateResultContainer(result) {
   resultContainer.style.display = 'block';
 }
 
+// Function to check if base64 data is an image
+function isBase64Image(base64) {
+    // Check if the base64 string starts with a data URL for an image
+    return /^data:image\/(jpeg|png|gif|webp|svg\+xml);base64,/.test(base64) ||
+           // Or if it's a raw base64 image (no data URL prefix)
+           /^[A-Za-z0-9+/=]+$/.test(base64);
+}
+
+// Function to format base64 data for display
+function formatBase64ForDisplay(base64) {
+    if (isBase64Image(base64)) {
+        // If it's a raw base64 image, add the data URL prefix
+        if (!base64.startsWith('data:')) {
+            return `data:image/jpeg;base64,${base64}`;
+        }
+        return base64;
+    }
+    return base64;
+}
+
 // Event listener for blob retrieval
 if (document.getElementById('retrieveForm')) {
-  document.getElementById('retrieveForm').addEventListener('submit', async (event) => {
-    event.preventDefault();
-    
-    const height = document.getElementById('retrieveHeight').value.trim();
-    const namespaceHex = document.getElementById('retrieveNamespace').value.trim();
-    
-    if (!height || !namespaceHex) {
-      showToast('Please enter both height and namespace');
-      return;
-    }
-    
-    // Clear previous results
-    const blobResultsContainer = document.getElementById('blobResults');
-    if (blobResultsContainer) {
-      blobResultsContainer.style.display = 'none';
-    }
-    
-    // Show loading
-    showToast('Retrieving blob data...');
-    
-    try {
-      // Fetch the blob
-      const result = await retrieveBlob(height, namespaceHex);
-      
-      // Display results
-      if (result) {
-        // Update UI with blob data
-        if (document.getElementById('fetchedCommitment')) {
-          document.getElementById('fetchedCommitment').textContent = result.commitment || 'N/A';
-        }
-        if (document.getElementById('fetchedNamespace')) {
-          document.getElementById('fetchedNamespace').textContent = result.namespace || 'N/A';
-        }
-        if (document.getElementById('fetchedData')) {
-          // Display raw data in the code block without any conversion
-          document.getElementById('fetchedData').textContent = result.data || 'N/A';
+    document.getElementById('retrieveForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        
+        const height = document.getElementById('retrieveHeight').value.trim();
+        const namespaceHex = document.getElementById('retrieveNamespace').value.trim();
+        
+        if (!height || !namespaceHex) {
+            showToast('Please enter both height and namespace');
+            return;
         }
         
-        // Update the namespace explorer link
-        const fetchedNamespaceLink = document.getElementById('fetchedNamespaceLink');
-        if (fetchedNamespaceLink) {
-          fetchedNamespaceLink.href = `https://mocha.celenium.io/namespace/000000000000000000000000000000000000${namespaceHex}?tab=Blobs`;
-        }
-        
-        // Update command line examples
-        updateCommandExamples(height, namespaceHex, result.commitment);
-        
+        // Clear previous results
+        const blobResultsContainer = document.getElementById('blobResults');
         if (blobResultsContainer) {
-          blobResultsContainer.style.display = 'block';
+            blobResultsContainer.style.display = 'none';
         }
         
-        showToast('Blob retrieved successfully');
-      } else {
-        showToast('No blob found');
-      }
-    } catch (error) {
-      console.error('Error in blob retrieval:', error.message);
-      showToast(`Error: ${error.message}`);
-    }
-  });
+        // Show loading
+        showToast('Retrieving blob data...');
+        
+        try {
+            // Fetch the blob
+            const result = await retrieveBlob(height, namespaceHex);
+            
+            // Display results
+            if (result) {
+                // Update UI with blob data
+                if (document.getElementById('fetchedCommitment')) {
+                    document.getElementById('fetchedCommitment').textContent = result.commitment || 'N/A';
+                }
+                if (document.getElementById('fetchedNamespace')) {
+                    document.getElementById('fetchedNamespace').textContent = result.namespace || 'N/A';
+                }
+                if (document.getElementById('fetchedData')) {
+                    const data = result.data || 'N/A';
+                    const formattedData = formatBase64ForDisplay(data);
+                    
+                    // Create a container for the data display
+                    const dataContainer = document.createElement('div');
+                    
+                    if (isBase64Image(formattedData)) {
+                        // If it's an image, create an img element
+                        const img = document.createElement('img');
+                        img.src = formattedData;
+                        img.className = 'img-fluid';
+                        img.style.maxHeight = '300px';
+                        img.style.marginBottom = '1rem';
+                        dataContainer.appendChild(img);
+                        
+                        // Add the base64 data below the image
+                        const pre = document.createElement('pre');
+                        pre.style.margin = '0';
+                        pre.style.padding = '0';
+                        const code = document.createElement('code');
+                        code.className = 'result-value';
+                        code.style.display = 'block';
+                        code.style.padding = '15px';
+                        code.style.whiteSpace = 'pre-wrap';
+                        code.style.wordWrap = 'break-word';
+                        code.style.marginBottom = '0';
+                        code.textContent = data;
+                        pre.appendChild(code);
+                        dataContainer.appendChild(pre);
+                    } else {
+                        // If it's not an image, display as text
+                        const pre = document.createElement('pre');
+                        pre.style.margin = '0';
+                        pre.style.padding = '0';
+                        const code = document.createElement('code');
+                        code.className = 'result-value';
+                        code.style.display = 'block';
+                        code.style.padding = '15px';
+                        code.style.whiteSpace = 'pre-wrap';
+                        code.style.wordWrap = 'break-word';
+                        code.style.marginBottom = '0';
+                        code.textContent = data;
+                        pre.appendChild(code);
+                        dataContainer.appendChild(pre);
+                    }
+                    
+                    // Replace the existing content
+                    const existingDataElement = document.getElementById('fetchedData');
+                    existingDataElement.parentNode.replaceChild(dataContainer, existingDataElement);
+                }
+                
+                // Update the namespace explorer link
+                const fetchedNamespaceLink = document.getElementById('fetchedNamespaceLink');
+                if (fetchedNamespaceLink) {
+                    fetchedNamespaceLink.href = `https://mocha.celenium.io/namespace/000000000000000000000000000000000000${namespaceHex}?tab=Blobs`;
+                }
+                
+                // Update command line examples
+                updateCommandExamples(height, namespaceHex, result.commitment);
+                
+                if (blobResultsContainer) {
+                    blobResultsContainer.style.display = 'block';
+                }
+                
+                showToast('Blob retrieved successfully');
+            } else {
+                showToast('No blob found');
+            }
+        } catch (error) {
+            console.error('Error in blob retrieval:', error.message);
+            showToast(`Error: ${error.message}`);
+        }
+    });
 }
 
 // Function to update command examples with the correct values
@@ -2658,4 +2730,84 @@ function updateDatabaseInfoPanel() {
         document.getElementById('recordsTable').style.display = 'none';
         document.getElementById('noRecordsMsg').style.display = 'block';
     }
-} 
+}
+
+// Function to optimize image size
+async function optimizeImage(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                let quality = 0.9;
+
+                // Calculate initial size
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+
+                // Function to get base64 size
+                const getBase64Size = (base64) => {
+                    return Math.ceil((base64.length - 22) * 3 / 4);
+                };
+
+                // Function to try different quality settings
+                const tryQuality = () => {
+                    const base64 = canvas.toDataURL('image/jpeg', quality);
+                    const size = getBase64Size(base64);
+                    
+                    if (size > 1.9 * 1024 * 1024 && quality > 0.1) {
+                        quality -= 0.1;
+                        tryQuality();
+                    } else if (size > 1.9 * 1024 * 1024) {
+                        // If still too large, reduce dimensions
+                        width = Math.floor(width * 0.9);
+                        height = Math.floor(height * 0.9);
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+                        quality = 0.9;
+                        tryQuality();
+                    } else {
+                        resolve(base64);
+                    }
+                };
+
+                tryQuality();
+            };
+            img.onerror = reject;
+            img.src = e.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+// Event listener for image upload
+imageUploadInput.addEventListener('change', async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+        // Show loading state
+        imagePreviewContainer.style.display = 'none';
+        previewImage.src = '';
+        
+        // Optimize image
+        const optimizedBase64 = await optimizeImage(file);
+        
+        // Update preview
+        previewImage.src = optimizedBase64;
+        imagePreviewContainer.style.display = 'block';
+        
+        // Update data input
+        dataInput.value = optimizedBase64.split(',')[1]; // Remove data URL prefix
+    } catch (error) {
+        console.error('Error processing image:', error);
+        showToast('Error processing image. Please try again.');
+    }
+}); 

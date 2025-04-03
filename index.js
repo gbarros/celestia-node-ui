@@ -1793,7 +1793,12 @@ if (document.getElementById('retrieveForm')) {
                         pre.appendChild(code);
                         dataContainer.appendChild(pre);
                     } else {
-                        // If it's not an image, display as text
+                        // If it's not an image, show a message and the data
+                        const noImageMsg = document.createElement('div');
+                        noImageMsg.className = 'alert alert-info mb-3';
+                        noImageMsg.textContent = 'No image data found. Displaying raw data:';
+                        dataContainer.appendChild(noImageMsg);
+                        
                         const pre = document.createElement('pre');
                         pre.style.margin = '0';
                         pre.style.padding = '0';

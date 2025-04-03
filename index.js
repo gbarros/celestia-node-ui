@@ -1709,22 +1709,51 @@ function updateResultContainer(result) {
 
 // Function to check if base64 data is an image
 function isBase64Image(base64) {
-    // Check if the base64 string starts with a data URL for an image
-    return /^data:image\/(jpeg|png|gif|webp|svg\+xml);base64,/.test(base64) ||
-           // Or if it's a raw base64 image (no data URL prefix)
-           /^[A-Za-z0-9+/=]+$/.test(base64);
+    try {
+        // Try to decode a small portion of the base64 string
+        const decodedData = atob(base64.split(',').pop() || base64);
+        
+        // Check for common image file signatures in the binary data
+        const signatures = {
+            jpeg: [0xFF, 0xD8, 0xFF],
+            png: [0x89, 0x50, 0x4E, 0x47],
+            gif: [0x47, 0x49, 0x46, 0x38],
+            webp: [0x52, 0x49, 0x46, 0x46]
+        };
+        
+        // Convert first few bytes to array for checking
+        const bytes = new Uint8Array(decodedData.slice(0, 8).split('').map(c => c.charCodeAt(0)));
+        
+        // Check against known image signatures
+        return Object.values(signatures).some(sig => 
+            sig.every((byte, i) => bytes[i] === byte)
+        );
+    } catch (e) {
+        return false;
+    }
 }
 
 // Function to format base64 data for display
 function formatBase64ForDisplay(base64) {
-    if (isBase64Image(base64)) {
-        // If it's a raw base64 image, add the data URL prefix
-        if (!base64.startsWith('data:')) {
-            return `data:image/jpeg;base64,${base64}`;
+    try {
+        // If it's already a data URL, return as is
+        if (base64.startsWith('data:image/')) {
+            return base64;
         }
+        
+        // Try to detect image type from binary signature
+        const decodedData = atob(base64);
+        const bytes = new Uint8Array(decodedData.slice(0, 8).split('').map(c => c.charCodeAt(0)));
+        
+        let mimeType = 'image/jpeg'; // default
+        if (bytes[0] === 0x89 && bytes[1] === 0x50) mimeType = 'image/png';
+        else if (bytes[0] === 0x47 && bytes[1] === 0x49) mimeType = 'image/gif';
+        else if (bytes[0] === 0x52 && bytes[1] === 0x49) mimeType = 'image/webp';
+        
+        return `data:${mimeType};base64,${base64}`;
+    } catch (e) {
         return base64;
     }
-    return base64;
 }
 
 // Event listener for blob retrieval
@@ -1764,18 +1793,25 @@ if (document.getElementById('retrieveForm')) {
                 }
                 if (document.getElementById('fetchedData')) {
                     const data = result.data || 'N/A';
-                    const formattedData = formatBase64ForDisplay(data);
                     
                     // Create a container for the data display
                     const dataContainer = document.createElement('div');
                     
-                    if (isBase64Image(formattedData)) {
+                    if (data !== 'N/A' && isBase64Image(data)) {
                         // If it's an image, create an img element
                         const img = document.createElement('img');
-                        img.src = formattedData;
+                        img.src = formatBase64ForDisplay(data);
                         img.className = 'img-fluid';
                         img.style.maxHeight = '300px';
                         img.style.marginBottom = '1rem';
+                        img.onerror = () => {
+                            // If image fails to load, show the no image message
+                            img.remove();
+                            const noImageMsg = document.createElement('div');
+                            noImageMsg.className = 'alert alert-info mb-3';
+                            noImageMsg.textContent = 'No valid image data found. Displaying raw data:';
+                            dataContainer.insertBefore(noImageMsg, dataContainer.firstChild);
+                        };
                         dataContainer.appendChild(img);
                         
                         // Add the base64 data below the image

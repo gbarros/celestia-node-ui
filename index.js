@@ -2781,37 +2781,41 @@ async function optimizeImage(file) {
             const img = new Image();
             img.onload = function() {
                 const canvas = document.createElement('canvas');
-                let width = img.width;
-                let height = img.height;
-                let quality = 0.9;
-
-                // Calculate initial size
-                canvas.width = width;
-                canvas.height = height;
+                canvas.width = img.width;
+                canvas.height = img.height;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0);
 
-                // Function to get base64 size
-                const getBase64Size = (base64) => {
-                    return Math.ceil((base64.length - 22) * 3 / 4);
-                };
-
-                // Function to try different quality settings
+                // Get base64 at full quality first
+                const base64 = canvas.toDataURL('image/jpeg', 1.0);
+                const size = Math.ceil((base64.length - 22) * 3 / 4);
+                
+                // If under 32MB, use as is
+                if (size <= 32 * 1024 * 1024) {
+                    resolve(base64);
+                    return;
+                }
+                
+                // If over 32MB, try to reduce size while maintaining quality
+                let width = img.width;
+                let height = img.height;
+                let quality = 0.95; // Start with very high quality
+                
                 const tryQuality = () => {
                     const base64 = canvas.toDataURL('image/jpeg', quality);
-                    const size = getBase64Size(base64);
+                    const size = Math.ceil((base64.length - 22) * 3 / 4);
                     
-                    if (size > 1.9 * 1024 * 1024 && quality > 0.1) {
-                        quality -= 0.1;
+                    if (size > 32 * 1024 * 1024 && quality > 0.1) {
+                        quality -= 0.05; // Reduce quality more gradually
                         tryQuality();
-                    } else if (size > 1.9 * 1024 * 1024) {
-                        // If still too large, reduce dimensions
-                        width = Math.floor(width * 0.9);
-                        height = Math.floor(height * 0.9);
+                    } else if (size > 32 * 1024 * 1024) {
+                        // Only reduce dimensions as a last resort
+                        width = Math.floor(width * 0.95); // Reduce more gradually
+                        height = Math.floor(height * 0.95);
                         canvas.width = width;
                         canvas.height = height;
                         ctx.drawImage(img, 0, 0, width, height);
-                        quality = 0.9;
+                        quality = 0.95;
                         tryQuality();
                     } else {
                         resolve(base64);

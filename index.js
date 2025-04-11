@@ -123,7 +123,7 @@ async function sendRpcRequest(method, params = []) {
     const timeoutPromise = new Promise((_, reject) => {
       setTimeout(() => {
         connectionTimeout = true;
-        reject(new Error('Connection timeout: Unable to connect to Celestia node. Please start your node with:\ncelestia light start --p2p.network mocha --core.ip rpc-mocha.pops.one --core.port 9090 --rpc.skip-auth'));
+        reject(new Error('Connection timeout: Unable to connect to Celestia node. Please start your node with:\ncelestia light start --p2p.network mammoth --core.ip global.grpc.mamochain.com --core.port 9090 --rpc.skip-auth'));
       }, 1000);
     });
     
@@ -681,7 +681,7 @@ async function retrieveBlob(height, namespaceHex) {
   try {
     // Check if connected to Celestia node
     if (!isConnected) {
-      throw new Error('Connection timeout: Unable to connect to Celestia node. Please start your node with:\ncelestia light start --p2p.network mocha --core.ip rpc-mocha.pops.one --core.port 9090 --rpc.skip-auth');
+      throw new Error('Connection timeout: Unable to connect to Celestia node. Please start your node with:\ncelestia light start --p2p.network mammoth --core.ip global.grpc.mamochain.com --core.port 9090 --rpc.skip-auth');
     }
   
     // Validate the height
@@ -1041,7 +1041,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
           
           if (transferExplorerLink) {
-            const explorerUrl = `https://mocha.celenium.io/tx/${txResult.txhash}`;
+            const explorerUrl = `https://mammoth.celenium.io/tx/${txResult.txhash}`;
             transferExplorerLink.href = explorerUrl;
           }
         }
@@ -1150,7 +1150,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const namespaceHex = base64ToHex(namespace);
         const initDbNamespaceLink = document.getElementById('initDbNamespaceLink');
         if (initDbNamespaceLink) {
-          initDbNamespaceLink.href = `https://mocha.celenium.io/namespace/000000000000000000000000000000000000${namespaceHex}?tab=Blobs`;
+          initDbNamespaceLink.href = `https://mammoth.celenium.io/namespace/000000000000000000000000000000000000${namespaceHex}?tab=Blobs`;
         }
         
         // Update the database info panel
@@ -1680,7 +1680,7 @@ function updateResultContainer(result) {
   // Update the namespace explorer link
   const namespaceLink = document.getElementById('resultNamespaceLink');
   if (namespaceLink) {
-    namespaceLink.href = `https://mocha.celenium.io/namespace/000000000000000000000000000000000000${result.namespaceHex}?tab=Blobs`;
+    namespaceLink.href = `https://mammoth.celenium.io/namespace/000000000000000000000000000000000000${result.namespaceHex}?tab=Blobs`;
   }
   
   // Set values for retrieval form
@@ -1858,7 +1858,7 @@ if (document.getElementById('retrieveForm')) {
                 // Update the namespace explorer link
                 const fetchedNamespaceLink = document.getElementById('fetchedNamespaceLink');
                 if (fetchedNamespaceLink) {
-                    fetchedNamespaceLink.href = `https://mocha.celenium.io/namespace/000000000000000000000000000000000000${namespaceHex}?tab=Blobs`;
+                    fetchedNamespaceLink.href = `https://mammoth.celenium.io/namespace/000000000000000000000000000000000000${namespaceHex}?tab=Blobs`;
                 }
                 
                 // Update command line examples
@@ -2713,7 +2713,7 @@ function updateDatabaseInfoPanel() {
         // Update namespace link
         if (dbInfoNamespaceLink) {
             const namespaceHex = base64ToHex(namespace);
-            dbInfoNamespaceLink.href = `https://mocha.celenium.io/namespace/000000000000000000000000000000000000${namespaceHex}?tab=Blobs`;
+            dbInfoNamespaceLink.href = `https://mammoth.celenium.io/namespace/000000000000000000000000000000000000${namespaceHex}?tab=Blobs`;
             dbInfoNamespaceLink.style.display = 'inline-block';
         }
         

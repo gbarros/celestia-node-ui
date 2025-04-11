@@ -13,7 +13,7 @@ A frontend application for interacting with the Celestia network using a local C
 1. Make sure your Celestia light node is running with the following command: 
 
 ```bash
-celestia light start --p2p.network mocha --core.ip rpc-mocha.pops.one --core.port 9090 --rpc.skip-auth
+celestia light start --p2p.network mammoth --core.ip global.grpc.mamochain.com --core.port 9090 --rpc.skip-auth
 ```
 
 2. Install the dependencies:
